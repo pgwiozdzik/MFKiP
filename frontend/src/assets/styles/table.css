@@ -1,0 +1,42 @@
+/* Fundament tabeli */
+.table-container {
+    background: white;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.table-custom {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+/* Domyślne style komórek */
+.table-custom th, .table-custom td {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    text-align: center;
+}
+
+/* --- MODYFIKATORY WIDOKÓW --- */
+
+/* 1. Widok OVERVIEW (Tylko 3 kolumny, bardzo duże) */
+.table-view-overview .col-time { width: 15%; font-weight: bold; }
+.table-view-overview .col-performer { width: 55%; text-align: left;}
+.table-view-overview .col-status { width: 30%; }
+
+/* 2. Widok RECEPTION (Więcej szczegółów dla wolontariuszy) */
+.table-view-reception .col-time { width: 10%; }
+.table-view-reception .col-performer { width: 30%; }
+.table-view-reception .col-volunteer { width: 25%; color: #666; }
+.table-view-reception .col-actions { width: 35%; text-align: right; }
+
+/* 3. Widok STAGE (Skupienie na czasie i zmianach) */
+.table-view-stage .col-time { width: 10%; }
+.table-view-stage .col-performer { width: 40%; font-weight: bold; }
+.table-view-stage .col-diff { width: 20%; color: var(--color-called); }
+.table-view-stage .col-status { width: 30%; }
+
+/* Ukrywanie kolumn na różnych widokach */
+.hidden {
+    display: none;
+}

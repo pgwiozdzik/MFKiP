@@ -1,0 +1,116 @@
+body {
+    /*background-image: url("/angel.jpeg");*/
+    margin: 0;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-light);
+    color: var(--text-dark);
+}
+
+.wrapper {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* HEADER STYLES */
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--white);
+    padding: 0 30px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    height: 80px;
+}
+
+.header-left {
+    flex: 4;
+    display: flex;
+    align-items: center;
+    justify-content: left;
+    gap: 12px;
+}
+.header-center {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+.header-right {
+    flex: 4;
+    display: flex;
+    align-items: center;
+    justify-content: right;
+    gap: 12px;
+}
+
+.app-title-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.app-name, .day-name  {
+    font-weight: bold;
+    font-size: 2rem;
+    color: var(--primary);
+}
+
+.role-badge {
+    display: flex;
+    align-items: center;
+    font-weight: 300; /* Lightweight font */
+    font-size: 2rem;
+    color: #697475; /* Delikatny szary */
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.role-badge .separator {
+    margin-right: 10px;
+    color: #ddd; /* Bardzo jasna kreska pionowa */
+    font-weight: 100;
+}
+
+.day-name  {
+    text-transform: uppercase;
+}
+
+.logo-placeholder {
+    background-color: var(--primary);
+    color: white;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 24px;
+}
+
+.big-clock {
+    font-size: 3rem;
+    font-weight: bold;
+    padding: 4px 25px;
+
+}
+
+.logo-link {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: transform 0.2s ease;
+}
+
+.logo-link:hover {
+    transform: scale(1.05);
+}
+
+.logo-img {
+    height: 60px; /* Dopasowane do wysokości headera */
+    width: auto;
+    border-radius: 4px;
+    object-fit: contain;
+}

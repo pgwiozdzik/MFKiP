@@ -1,0 +1,29 @@
+.wrapper {
+    padding: 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.error-message {
+    /*color: #721c24;*/
+    /*background-color: #f8d7da;*/
+    /*border: 1px solid #f5c6cb;*/
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    margin-top: 50px;
+    font-weight: bold;
+    font-size: 3rem;
+}
+
+/* Specyfika dla wiersza "Występuje" (Live) */
+.row-live {
+    background-color: #fffde7;
+    outline: 2px solid var(--color-live);
+    z-index: 1;
+}
+
+.row-live td {
+    font-weight: bold;
+    font-size: 1.3rem; /* Większa czcionka dla aktualnego występu */
+}
