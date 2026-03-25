@@ -85,7 +85,6 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    border-radius: 8px;
     font-weight: bold;
     font-size: 24px;
 }
@@ -111,6 +110,5 @@ body {
 .logo-img {
     height: 60px; /* Dopasowane do wysokości headera */
     width: auto;
-    border-radius: 4px;
     object-fit: contain;
 }

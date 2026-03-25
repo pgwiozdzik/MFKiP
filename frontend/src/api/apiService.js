@@ -1,4 +1,6 @@
 // src/api/apiService.js
+import axios from "axios";
+
 const API_BASE_URL = 'http://localhost:8081/api';
 
 export const apiService = {
@@ -12,6 +14,11 @@ export const apiService = {
             console.error("API Error [getAllPerformances]:", error);
             throw error;
         }
+    },
+
+    getAllVolunteers: async () => {
+        const response = await axios.get(`${API_BASE_URL}/volunteers/all`);
+        return response.data;
     },
 
     // Sekcja: Dni

@@ -25,7 +25,7 @@ public class PerformanceController {
     // Pobieranie wszystkich występów
     @GetMapping("/all")
     public List<Performance> getAllPerformances() {
-        return performanceRepository.findAll();
+        return performanceRepository.findAllSorted();
     }
 
     // Aktualizacja statusu z powiadomieniem WebSocket

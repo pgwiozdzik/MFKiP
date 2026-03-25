@@ -70,7 +70,7 @@ const Header = ({ userRole, onLogout }) => {
                     <img src="/logo.png" alt="Logo MFKiP" className="logo-img" />
                 </div>
                 <div className="app-title-container">
-                    <span className="app-name">MFKiP LIVE</span>
+                    <span className="app-name">MFKiP</span>
                     {userRole && (
                         <span className="role-badge">
                             <span className="separator">|</span>

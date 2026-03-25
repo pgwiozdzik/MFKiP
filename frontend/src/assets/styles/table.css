@@ -1,4 +1,6 @@
-/* Fundament tabeli */
+/* ==========================================================================
+   1. FUNDAMENT TABELI I STRUKTURA
+   ========================================================================== */
 .table-container {
     background: white;
     overflow: hidden;
@@ -10,78 +12,157 @@
     border-collapse: collapse;
 }
 
-/* Domyślne style komórek */
-.table-custom th, .table-custom td {
+.table-custom th,
+.table-custom td {
     padding: 15px;
     border-bottom: 1px solid #eee;
     text-align: center;
+    vertical-align: middle;
 }
 
-/* --- MODYFIKATORY WIDOKÓW --- */
-
-/* 1. Widok OVERVIEW (Tylko 3 kolumny, bardzo duże) */
-.table-view-overview .col-time { width: 15%; font-weight: bold; }
-.table-view-overview .col-performer { width: 55%; text-align: left;}
-.table-view-overview .col-status { width: 30%; }
-
-/* 2. Widok RECEPTION (Więcej szczegółów dla wolontariuszy) */
-.table-view-reception .col-time { width: 10%; }
-.table-view-reception .col-performer { width: 30%; }
-.table-view-reception .col-volunteer { width: 25%; color: #666; }
-.table-view-reception .col-actions { width: 35%; text-align: right; }
-
-/* 3. Widok STAGE (Skupienie na czasie i zmianach) */
-.table-view-stage .col-time { width: 10%; }
-.table-view-stage .col-performer { width: 40%; font-weight: bold; }
-.table-view-stage .col-diff { width: 20%; color: var(--color-called); }
-.table-view-stage .col-status { width: 30%; }
-
-/* Ukrywanie kolumn na różnych widokach */
 .hidden {
     display: none;
 }
 
+.invisible {
+    visibility: hidden;
+}
 
+/* ==========================================================================
+   2. MODYFIKATORY WIDOKÓW (LAYOUT KOLUMN)
+   ========================================================================== */
 
+/* Overview */
+.table-view-overview .col-time { width: 15%; font-weight: bold; }
+.table-view-overview .col-performer { width: 55%;  }
+.table-view-overview .col-status { width: 30%; }
+
+/* Reception */
+.table-view-reception .col-time { width: 10%; }
+.table-view-reception .col-performer { width: 45%; text-align: left;}
+.table-view-reception .col-volunteer { width: 20%; color: #666; }
+.table-view-reception .col-actions { width: 25%; text-align: center; }
+.table-reception th:last-child { width: 350px; }
+
+/* Stage */
+.table-view-stage .col-time { width: 10%; }
+.table-view-stage .col-performer { width: 40%; font-weight: bold; }
+.table-view-stage .col-diff { width: 20%; }
+.table-view-stage .col-status { width: 30%; }
+
+/* ==========================================================================
+   3. STYLIZACJA WIERSZY I STATUSÓW (BADGES)
+   ========================================================================== */
 .row-break {
     background-color: #f8f9fa;
     font-style: italic;
 }
 
-.note-stage {
+.status-badge {
+    padding: 5px 10px;
+     
     font-size: 0.85rem;
-    color: #666;
+    font-weight: 600;
+    display: inline-block;
 }
 
-.action-buttons {
+.badge-none { display: none; }
+.badge-arrived { background-color: var(--status-arrived); color: white; }
+.badge-called { background-color: var(--status-called); color: white; }
+.badge-coming { background-color: #d35400; color: white; }
+.badge-stage { background-color: var(--status-stage); color: white; }
+.badge-live { background-color: var(--status-live); color: white; animation: blink 1s infinite; }
+.badge-after { background-color: var(--status-after); color: #7f8c8d; }
+.badge-no-show { background-color: var(--status-noshow); color: white; }
+
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* ==========================================================================
+   4. PRZYCISKI AKCJI I KONTROLKI
+   ========================================================================== */
+
+/* Kontener główny w komórce */
+.action-buttons-wrapper {
+    display: flex;
+    justify-content: right;
+    align-items: center;
+    /*min-width: 350px; !* Rezerwacja miejsca na strzałki + akcje *!*/
+    gap: 15px;
+}
+
+/* Grupy przycisków */
+.status-actions {
     display: flex;
     gap: 5px;
-    justify-content: center;
+    flex-shrink: 0;
 }
 
-.btn-confirm {
-    background-color: #28a745;
-    color: white;
-    border: none;
+.utility-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+/* Przyciski funkcyjne */
+.btn-arrived { background-color: #27ae60; color: white; border: none; padding: 6px 12px; cursor: pointer; }
+.btn-call { background-color: #f39c12; color: white; border: none; padding: 6px 12px; cursor: pointer; }
+.btn-coming { background-color: #d35400; color: white; border: none; padding: 6px 12px; cursor: pointer; }
+.btn-no-show { background-color: #34495e; color: white; border: none; padding: 6px 12px; cursor: pointer; }
+.btn-reset { background: none; border: 1px solid #95a5a6; color: #757575; padding: 6px 10px; cursor: pointer; font-size: 0.8em; }
+
+/* Przyciski edycji i zapisu */
+.btn-edit, .btn-order {
+    background: #f8f9fa;
+    border: 1px solid #dadce0;
     padding: 4px 8px;
-    border-radius: 4px;
     cursor: pointer;
-    font-size: 0.75rem;
+    font-size: 0.9em;
+    transition: background 0.2s;
+}
+.btn-edit:hover, .btn-order:hover { background: #f1f3f4; }
+
+.btn-ok { background-color: #28a745; color: white; border: none; padding: 5px 15px;   cursor: pointer; }
+.btn-cancel { background-color: #dc3545; color: white; border: none; padding: 5px 15px;   cursor: pointer; }
+
+/* ==========================================================================
+   5. ZAMIANA KOLEJNOŚCI (STRZAŁKI)
+   ========================================================================== */
+.order-actions {
+    display: flex;
+    gap: 2px;
 }
 
-.btn-ok { background-color: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 4px; }
-.btn-cancel { background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; }
-.btn-edit { background: none; border: 1px solid #ccc; cursor: pointer; padding: 4px 8px; }
 
+
+/* Strzałki w wierszu przerwy */
+.row-break .btn-order {
+    background: #fff8e1;
+    border-color: #ffe082;
+    color: #f57f17;
+}
+
+/* ==========================================================================
+   6. DODAWANIE PRZERW / UWAGI
+   ========================================================================== */
 .add-section {
     margin-top: 20px;
     padding: 15px;
     background: #eee;
-    border-radius: 8px;
 }
 
 .add-panel {
     display: flex;
     align-items: center;
     gap: 10px;
+}
+
+.note-stage-cell {
+    font-size: 0.85rem;
+    color: #666;
+    font-style: italic;
 }

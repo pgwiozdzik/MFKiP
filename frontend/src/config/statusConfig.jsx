@@ -1,6 +1,7 @@
 export const STATUS_CONFIG = {
-    'none': { label: 'Oczekuje', short: 'OCZ.', class: 'badge-none' },
-    'arrived': { label: 'W Arenie / W Szkole', short: 'ARENA', class: 'badge-arrived' },
+    'none': { label: 'Czekamy', short: 'Czekamy', class: 'badge-none' },
+    'arrived_venue': { label: 'W Arenie', short: 'ARENA', class: 'badge-arrived' },
+    'arrived_school': { label: 'W Szkole', short: 'SZKOŁA', class: 'badge-arrived' },
     'called': { label: 'Wezwany pod scenę', short: 'WEZW.', class: 'badge-called' },
     'coming': { label: 'W drodze pod scenę', short: 'DROGA', class: 'badge-coming' },
     'at-stage': { label: 'Oczekujący pod sceną', short: 'SCENA', class: 'badge-stage' },

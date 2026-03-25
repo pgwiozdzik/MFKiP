@@ -16,9 +16,9 @@ const Login = ({ onLogin }) => {
     };
 
     const PASSWORDS = {
-        reception: 'recepcja123',
-        stage: 'scena123',
-        admin: 'admin123'
+        reception: 'a',
+        stage: 'a',
+        admin: 'a'
     };
 
     const handleRoleSelect = (role) => {

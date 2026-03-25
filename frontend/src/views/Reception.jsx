@@ -1,27 +1,46 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { apiService } from '../api/apiService.js';
+import { STATUS_CONFIG } from '../config/statusConfig';
+import { useWebSockets } from '../hooks/useWebSockets.js';
 import '../assets/styles/table.css';
 
 const Reception = () => {
     const [performances, setPerformances] = useState([]);
+    const [volunteers, setVolunteers] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [editingId, setEditingId] = useState(null); // ID wiersza w trybie edycji
-    const [editData, setEditData] = useState({}); // Dane tymczasowe edytowanego wiersza
+    const [editingId, setEditingId] = useState(null);
+    const [editData, setEditData] = useState({});
+
+    const loadData = useCallback(async () => {
+        try {
+            const [perfData, volData] = await Promise.all([
+                apiService.getAllPerformances(),
+                apiService.getAllVolunteers()
+            ]);
+
+            const sorted = [...perfData].sort((a, b) => {
+                if (a.plannedStartTime !== b.plannedStartTime) {
+                    return a.plannedStartTime.localeCompare(b.plannedStartTime);
+                }
+                return a.id - b.id;
+            });
+
+            setPerformances(sorted);
+            setVolunteers(volData);
+            setLoading(false);
+        } catch (error) {
+            console.error("Błąd ładowania danych:", error);
+            setLoading(false);
+        }
+    }, []);
+
+    useWebSockets('/topic/performances', (message) => {
+        if (message === "UPDATE") loadData();
+    });
 
     useEffect(() => {
         loadData();
-    }, []);
-
-    const loadData = async () => {
-        try {
-            const data = await apiService.getAllPerformances();
-            setPerformances(data);
-            setLoading(false);
-        } catch (error) {
-            console.error("Błąd ładowania:", error);
-            setLoading(false);
-        }
-    };
+    }, [loadData]);
 
     const handleEditClick = (perf) => {
         setEditingId(perf.id);
@@ -35,23 +54,26 @@ const Reception = () => {
 
     const handleSave = async (id) => {
         try {
-            // Tutaj w przyszłości wywołanie apiService.updatePerformance(id, editData)
-            console.log("Zapisywanie:", editData);
-
-            // Symulacja aktualizacji w UI
-            setPerformances(performances.map(p => p.id === id ? editData : p));
+            await apiService.updatePerformance(id, editData);
             setEditingId(null);
         } catch (error) {
-            alert("Błąd zapisu");
+            alert("Błąd zapisu danych");
         }
     };
 
     const handleStatusChange = async (id, newStatus) => {
         try {
             await apiService.updatePerformanceStatus(id, newStatus);
-            loadData(); // Odświeżamy listę
         } catch (error) {
             alert("Nie udało się zmienić statusu");
+        }
+    };
+
+    const handleOrderChange = async (perf, direction) => {
+        try {
+            await apiService.reorderPerformance(perf.id, direction);
+        } catch (error) {
+            console.error("Błąd zmiany kolejności:", error);
         }
     };
 
@@ -60,70 +82,82 @@ const Reception = () => {
     return (
         <div className="wrapper">
             <div className="table-container">
-                <table className="table-custom table-reception">
+                <table className="table-custom table-view-reception table-reception">
                     <thead>
                     <tr>
-                        <th>Planowa</th>
-                        <th>Wykonawca</th>
-                        <th>Status</th>
-                        <th>Wolontariusz</th>
-                        <th>Uwagi Rec.</th>
-                        <th>Uwagi Scena</th>
-                        <th>Akcje</th>
+                        <th className="col-time">Godz.</th>
+                        <th className="col-performer">Wykonawca</th>
+                        <th className="col-status">Status</th>
+                        <th className="col-volunteer">Wolontariusz</th>
+                        <th className="col-notes hidden">Uwagi Rec.</th>
+                        <th className="col-notes hidden">Uwagi Scena</th>
+                        <th className="col-actions">Akcje</th>
                     </tr>
                     </thead>
                     <tbody>
-                    {performances.map((perf) => {
+                    {performances.map((perf, index) => {
                         const isEditing = editingId === perf.id;
+                        const config = STATUS_CONFIG[perf.status] || {};
+                        const isFirst = index === 0;
+                        const isLast = index === performances.length - 1;
 
                         return (
-                            <tr key={perf.id} className={perf.isBreak ? 'row-break' : ''}>
-                                {/* 1. GODZINA */}
-                                <td>{perf.plannedStartTime?.substring(0, 5)}</td>
-
-                                {/* 2. WYKONAWCA */}
-                                <td>
+                            <tr key={perf.id} className={perf.isBreak ? 'row-break' : `row-${perf.status}`}>
+                                <td className="col-time">{perf.plannedStartTime?.substring(0, 5)}</td>
+                                <td className="col-performer">
                                     {perf.isBreak ? <strong>{perf.performerName}</strong> : perf.performerName}
                                 </td>
-
-                                {/* 3. STATUS */}
-                                <td>
+                                <td className="col-status">
                                     {isEditing ? (
                                         <select
+                                            className="input-field"
                                             value={editData.status}
                                             onChange={(e) => setEditData({...editData, status: e.target.value})}
                                         >
-                                            <option value="none">Oczekuje</option>
-                                            <option value="confirmed">Potwierdzony</option>
-                                            <option value="after">Zakończony</option>
+                                            {Object.entries(STATUS_CONFIG).map(([key, val]) => (
+                                                <option key={key} value={key}>{val.label}</option>
+                                            ))}
                                         </select>
                                     ) : (
-                                        <span className={`status-badge ${perf.status}`}>
-                                                {perf.status}
+                                        <span className={`status-badge ${config.class}`}>
+                                                {config.label}
                                             </span>
                                     )}
                                 </td>
-
-                                {/* 4. WOLONTARIUSZ */}
-                                <td>
+                                <td className="col-volunteer">
                                     {isEditing ? (
-                                        <input
-                                            type="text"
-                                            value={editData.vName || ''}
-                                            onChange={(e) => setEditData({...editData, vName: e.target.value})}
-                                        />
+                                        <select
+                                            className="input-field"
+                                            value={editData.volunteer?.id || ""}
+                                            onChange={(e) => {
+                                                const vol = volunteers.find(v => v.id === parseInt(e.target.value));
+                                                setEditData({...editData, volunteer: vol || null});
+                                            }}
+                                        >
+                                            <option value="">Brak wolontariusza</option>
+                                            {volunteers.map(v => (
+                                                <option key={v.id} value={v.id}>{v.name}</option>
+                                            ))}
+                                        </select>
                                     ) : (
                                         <div>
-                                            <div>{perf.vName}</div>
-                                            <small>{perf.vPhone}</small>
+                                            {perf.volunteer ? (
+                                                <>
+                                                    <div style={{ fontWeight: 600 }}>{perf.volunteer.name}</div>
+                                                    <small style={{ color: '#2980b9' }}>
+                                                        <a href={`tel:${perf.volunteer.phone}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                                                            {perf.volunteer.phone}
+                                                        </a>
+                                                    </small>
+                                                </>
+                                            ) : <span style={{ color: '#ccc' }}>---</span>}
                                         </div>
                                     )}
                                 </td>
-
-                                {/* 5. UWAGI RECEPCJA */}
-                                <td>
+                                <td className="hidden">
                                     {isEditing ? (
                                         <input
+                                            className="input-field"
                                             type="text"
                                             value={editData.noteReception || ''}
                                             onChange={(e) => setEditData({...editData, noteReception: e.target.value})}
@@ -132,21 +166,62 @@ const Reception = () => {
                                         perf.noteReception
                                     )}
                                 </td>
+                                <td className="note-stage-cell hidden">{perf.noteStage}</td>
 
-                                {/* 6. UWAGI SCENA (Tylko podgląd) */}
-                                <td className="note-stage">{perf.noteStage}</td>
-
-                                {/* 7. AKCJE */}
-                                <td>
+                                <td className="col-actions">
                                     {isEditing ? (
-                                        <div className="action-buttons">
+                                        <div className="action-buttons editing">
                                             <button onClick={() => handleSave(perf.id)} className="btn-ok">OK</button>
                                             <button onClick={handleCancelEdit} className="btn-cancel">X</button>
                                         </div>
                                     ) : (
-                                        <div className="action-buttons">
-                                            <button onClick={() => handleEditClick(perf)} className="btn-edit">✎</button>
-                                            <button onClick={() => handleStatusChange(perf.id, 'confirmed')} className="btn-confirm">OBECNY</button>
+                                        <div className="action-buttons-wrapper">
+                                            <div className="status-actions">
+                                                {/* PROGRESJA STATUSÓW */}
+                                                {perf.status === 'none' && (
+                                                    <>
+                                                        <button onClick={() => handleStatusChange(perf.id, 'arrived_school')} className="btn-arrived">W SZKOLE</button>
+                                                        <button onClick={() => handleStatusChange(perf.id, 'arrived_venue')} className="btn-arrived">W ARENIE</button>
+                                                    </>
+                                                )}
+
+                                                {(perf.status === 'arrived_school' || perf.status === 'arrived_venue') && (
+                                                    <button onClick={() => handleStatusChange(perf.id, 'called')} className="btn-call">WEZWIJ</button>
+                                                )}
+
+                                                {perf.status === 'called' && (
+                                                    <button onClick={() => handleStatusChange(perf.id, 'coming')} className="btn-coming">W DRODZE</button>
+                                                )}
+
+                                                {/* DYNAMICZNE COFNIJ (UNDO) */}
+                                                {perf.status !== 'none' && perf.status !== 'after' && (
+                                                    <button onClick={() => {
+                                                        const prevMap = {
+                                                            'arrived_school': 'none',
+                                                            'arrived_venue': 'none',
+                                                            'called': 'arrived_venue', // Zakładamy powrót do stanu "obecny"
+                                                            'coming': 'called',
+                                                            'at-stage': 'coming',
+                                                            'performing': 'at-stage'
+                                                        };
+                                                        handleStatusChange(perf.id, prevMap[perf.status] || 'none');
+                                                    }} className="btn-reset">COFNIJ</button>
+                                                )}
+                                            </div>
+
+                                            <div className="utility-actions">
+                                                <button onClick={() => handleEditClick(perf)} className="btn-edit">✎</button>
+                                                <div className="order-actions">
+                                                    <button
+                                                        onClick={() => handleOrderChange(perf, 'up')}
+                                                        className={`btn-order ${isFirst ? 'invisible' : ''}`}
+                                                    > ▲ </button>
+                                                    <button
+                                                        onClick={() => handleOrderChange(perf, 'down')}
+                                                        className={`btn-order ${isLast ? 'invisible' : ''}`}
+                                                    > ▼ </button>
+                                                </div>
+                                            </div>
                                         </div>
                                     )}
                                 </td>
@@ -157,7 +232,7 @@ const Reception = () => {
                 </table>
             </div>
 
-            {/* Panel dodawania przerwy (uproszczony) */}
+            {/* Panel dodawania przerwy */}
             <div className="add-section">
                 <div className="add-panel">
                     <span>Dodaj przerwę:</span>
