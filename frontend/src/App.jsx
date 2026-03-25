@@ -1,25 +1,35 @@
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import Overview from './views/Overview';
 import Login from './views/Login';
-import Stage from './views/Stage';         // Zaimportuj, gdy stworzysz plik
-import Reception from './views/Reception'; // Zaimportuj, gdy stworzysz plik
+import Stage from './views/Stage';
+import Reception from './views/Reception';
 
 function App() {
-    // Funkcja decydująca, który widok pokazać na stronie głównej
-    const renderMainView = () => {
-        const userRole = localStorage.getItem('userRole');
+    // 1. Inicjalizujemy stan z localStorage
+    const [userRole, setUserRole] = useState(localStorage.getItem('userRole'));
 
+    // 2. Funkcja obsługująca zmianę autoryzacji
+    const handleAuthChange = (role) => {
+        if (role) {
+            localStorage.setItem('userRole', role);
+            setUserRole(role);
+        } else {
+            localStorage.removeItem('userRole');
+            setUserRole(null);
+        }
+    };
+
+    // 3. Logika wyboru widoku głównego
+    const renderMainView = () => {
         switch (userRole) {
             case 'admin':
-                // Admin może widzieć np. panel Sceny z dodatkowymi opcjami
-                return <Stage />;
             case 'stage':
                 return <Stage />;
             case 'reception':
                 return <Reception />;
             default:
-                // Brak roli = zwykły podgląd dla widzów
                 return <Overview />;
         }
     };
@@ -27,15 +37,18 @@ function App() {
     return (
         <Router>
             <div className="App">
-                <Header />
+                {/* PRZEKAZUJEMY PROPSY DO HEADERA */}
+                <Header userRole={userRole} onLogout={() => handleAuthChange(null)} />
+
                 <Routes>
-                    {/* Główny punkt wejścia - dynamiczny */}
                     <Route path="/" element={renderMainView()} />
 
-                    {/* Widok logowania pozostaje osobno */}
-                    <Route path="/login" element={<Login />} />
+                    {/* PRZEKAZUJEMY PROPSY DO LOGIN */}
+                    <Route
+                        path="/login"
+                        element={<Login onLogin={(role) => handleAuthChange(role)} />}
+                    />
 
-                    {/* Przekierowanie dla nieznanych ścieżek z powrotem na "/" */}
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { STATUS_CONFIG, getRowClass } from '../config/statusConfig';
-import { apiService } from '../api/apiService.js'; // Importujemy serwis
+import { STATUS_CONFIG } from '../config/statusConfig';
+import { apiService } from '../api/apiService.js';
+import { useWebSockets } from '../hooks/useWebSockets.js';
 
 const Overview = () => {
     const [schedule, setSchedule] = useState([]);
@@ -12,47 +13,52 @@ const Overview = () => {
             const data = await apiService.getAllPerformances();
             setSchedule(data);
             setLoading(false);
-        } catch {
+        } catch (err) {
             setError("W oczekiwaniu na kolejną edycję");
             setLoading(false);
         }
     };
 
+    // WYWOŁANIE HOOKA:
+    // Subskrybujemy kanał i mówimy co zrobić, gdy przyjdzie "UPDATE"
+    useWebSockets('/topic/performances', (message) => {
+        if (message === "UPDATE") {
+            console.log("WS: Odświeżam dane Overview...");
+            loadData();
+        }
+    });
+
     useEffect(() => {
         loadData();
-        const interval = setInterval(loadData, 5000);
-        return () => clearInterval(interval);
     }, []);
 
     const formatTime = (timeString) => timeString ? timeString.substring(0, 5) : "--:--";
 
-    if (loading) return <div className="wrapper">Inicjalizacja połączenia...</div>;
+    if (loading) return <div className="wrapper">Inicjalizacja...</div>;
     if (error) return <div className="wrapper error-message">{error}</div>;
 
     return (
         <div className="wrapper">
             <div className="table-container">
-                {/* Nakładamy klasę specyficzną dla tego widoku */}
                 <table className="table-custom table-view-overview">
                     <thead>
                     <tr>
                         <th className="col-time">Planowa</th>
                         <th className="col-performer">Wykonawca</th>
-                        {/* Kolumna wolontariusza ukryta w Overview */}
-                        <th className="col-volunteer hidden">Wolontariusz</th>
                         <th className="col-status">Status</th>
                     </tr>
                     </thead>
                     <tbody>
                     {schedule.map(row => (
-                        <tr key={row.id}>
+                        <tr key={row.id} className={row.isBreak ? 'row-break' : ''}>
                             <td className="col-time">{formatTime(row.plannedStartTime)}</td>
-                            <td className="col-performer">{row.performerName}</td>
-                            <td className="col-volunteer hidden">{row.volunteer?.name}</td>
+                            <td className="col-performer">
+                                {row.isBreak ? <strong>{row.performerName}</strong> : row.performerName}
+                            </td>
                             <td className="col-status">
-                                <span className={`status-badge badge-${row.status}`}>
-                                    {STATUS_CONFIG[row.status]?.label}
-                                </span>
+                                    <span className={`status-badge badge-${row.status}`}>
+                                        {STATUS_CONFIG[row.status]?.label || row.status}
+                                    </span>
                             </td>
                         </tr>
                     ))}

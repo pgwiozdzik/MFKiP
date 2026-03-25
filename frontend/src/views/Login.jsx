@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../assets/styles/login.css';
 
-const Login = () => {
+const Login = ({ onLogin }) => {
     const [selectedRole, setSelectedRole] = useState(null);
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -32,11 +32,9 @@ const Login = () => {
         e.preventDefault();
 
         if (PASSWORDS[selectedRole] === password) {
-            // 1. Zapisujemy rolę
-            localStorage.setItem('userRole', selectedRole);
-
-            // 2. Twarde przekierowanie, aby App.jsx przeładował switch(userRole)
-            window.location.href = '/';
+            // Wywołujemy funkcję przekazaną w propsach zamiast window.location.href
+            onLogin(selectedRole);
+            navigate('/');
         } else {
             setError("Błędne hasło dla wybranej roli!");
         }
@@ -45,7 +43,7 @@ const Login = () => {
     return (
         <div className="login-page">
             <div className="login-box">
-                <h2 style={{ textAlign: 'center', marginTop: 0 }}>Logowanie</h2>
+                <h2>Logowanie</h2>
 
                 {error && <p className="login-error">{error}</p>}
 
@@ -76,16 +74,13 @@ const Login = () => {
                 {selectedRole && (
                     <form onSubmit={handleLogin} className="password-section">
                         <div className="form-group">
-                            <label style={{ fontWeight: 'bold', fontSize: '0.9em' }}>
-                                Hasło ({roleNames[selectedRole]}):
-                            </label>
+                            <label>Hasło ({roleNames[selectedRole]}):</label>
                             <input
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 ref={passwordInputRef}
                                 required
-                                autoFocus
                             />
                         </div>
                         <button type="submit" className="btn-submit">ZALOGUJ SIĘ</button>
@@ -93,9 +88,7 @@ const Login = () => {
                 )}
 
                 <p className="back-link">
-                    <span onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
-                        &larr; Powrót do podglądu
-                    </span>
+                    <span onClick={() => navigate('/')}>&larr; Powrót do podglądu</span>
                 </p>
             </div>
         </div>

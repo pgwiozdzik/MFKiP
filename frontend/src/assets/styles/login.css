@@ -38,7 +38,7 @@
 
 .btn-role {
     padding: 15px;
-    border: 2px solid #eee;
+    border: 2px solid var(--primary);
     background: #fdfdfd;
     font-weight: bold;
     cursor: pointer;

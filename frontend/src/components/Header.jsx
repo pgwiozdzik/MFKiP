@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom'; // Dodano useLocation
 import { apiService } from '../api/apiService.js';
 
-const Header = () => {
+const Header = ({ userRole, onLogout }) => {
     const [time, setTime] = useState(new Date());
     const [activeDay, setActiveDay] = useState("Ładowanie...");
     const navigate = useNavigate();
-    const location = useLocation();
+    const location = useLocation(); // Pobieramy aktualną ścieżkę
+
+    const isLoginPage = location.pathname === '/login';
 
     const roleLabels = {
         reception: 'Recepcja',
         stage: 'Scena',
         admin: 'Administrator'
     };
-
-    const userRole = localStorage.getItem('userRole');
 
     useEffect(() => {
         const timer = setInterval(() => setTime(new Date()), 1000);
@@ -24,11 +24,9 @@ const Header = () => {
                 const data = await apiService.getActiveDay();
                 if (data && data.name) {
                     setActiveDay(data.name);
-                } else {
-                    setActiveDay("Brak aktywnego dnia");
                 }
             } catch (err) {
-                console.error("Nie udało się ustawić dnia:", err);
+                console.error("Błąd pobierania dnia:", err);
                 setActiveDay("2026");
             }
         };
@@ -37,15 +35,16 @@ const Header = () => {
         return () => clearInterval(timer);
     }, []);
 
-    // Logika kliknięcia w logo
     const handleLogoClick = () => {
         if (userRole) {
-            // Jeśli rola istnieje -> Wyloguj i odśwież
-            localStorage.removeItem('userRole');
-            // Przekierowanie na stronę główną z twardym odświeżeniem
-            window.location.href = '/';
+            // 1. Jeśli zalogowany -> Wyloguj
+            onLogout();
+            navigate('/');
+        } else if (isLoginPage) {
+            // 2. Jeśli niezalogowany i na stronie logowania -> Wróć do podglądu
+            navigate('/');
         } else {
-            // Jeśli brak roli -> Idź do logowania
+            // 3. Jeśli niezalogowany i gdzie indziej -> Idź do logowania
             navigate('/login');
         }
     };
@@ -65,7 +64,8 @@ const Header = () => {
                 <div
                     className={`logo-link ${userRole ? 'is-logged' : ''}`}
                     onClick={handleLogoClick}
-                    title={userRole ? "Wyloguj się" : "Panel logowania"}
+                    // Dynamiczny opis w zależności od miejsca i stanu
+                    title={userRole ? "Wyloguj się" : (isLoginPage ? "Powrót do podglądu" : "Panel logowania")}
                 >
                     <img src="/logo.png" alt="Logo MFKiP" className="logo-img" />
                 </div>
