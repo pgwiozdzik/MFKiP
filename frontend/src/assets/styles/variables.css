@@ -9,8 +9,14 @@
     --status-none: #e0e0e0;
     --status-arrived: #2196f3;   /* niebieski */
     --status-called: #ff9800;    /* pomarańczowy */
+    --status-coming: #d35400;
     --status-stage: #4caf50;     /* zielony */
     --status-live: #e74c3c;      /*czerwony       /* żółty: #ffeb3b; */
     --status-after: #9e9e9e;     /* szary */
     --status-noshow: #34495e;    /* czerwony */
+
+    --time-delay: var(--status-live);
+    --time-early: var(--status-stage);
+
+    --link-color: #2980b9;
 }

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { apiService } from '../api/apiService.js';
 import { STATUS_CONFIG } from '../config/statusConfig';
 import { useWebSockets } from '../hooks/useWebSockets.js';
+import { calculatePredictedTimes } from '../config/timeUtils.js';
 import '../assets/styles/table.css';
 
 const Reception = () => {
@@ -25,7 +26,9 @@ const Reception = () => {
                 return a.id - b.id;
             });
 
-            setPerformances(sorted);
+            const withPredictedTimes = calculatePredictedTimes(sorted);
+
+            setPerformances(withPredictedTimes);
             setVolunteers(volData);
             setLoading(false);
         } catch (error) {
@@ -77,6 +80,34 @@ const Reception = () => {
         }
     };
 
+    const renderPredictedTime = (perf) => {
+        // 1. Jeśli actualStartTime nie jest nullem, wstaw go na czarno
+        if (perf.actualStartTime) {
+            return (
+                <span>
+                    {perf.actualStartTime.substring(0, 5)}
+                </span>
+            );
+        }
+
+        // 2. Jeśli actualStartTime jest nullem, porównaj predicted z planned
+        const planned = perf.plannedStartTime?.substring(0, 5);
+        const predicted = perf.predictedTime;
+
+        let color;
+        if (predicted < planned) {
+            color = 'var(--time-early)'; // Zielony (przyspieszenie)
+        } else if (predicted > planned) {
+            color = 'var(--time-delay)'; // Czerwony (opóźnienie)
+        }
+
+        return (
+            <span style={{ color}}>
+                {predicted}
+            </span>
+        );
+    };
+
     if (loading) return <div className="wrapper">Ładowanie danych recepcji...</div>;
 
     return (
@@ -85,7 +116,8 @@ const Reception = () => {
                 <table className="table-custom table-view-reception table-reception">
                     <thead>
                     <tr>
-                        <th className="col-time">Godz.</th>
+                        <th className="col-time">Planowa</th>
+                        <th className="col-time-predicted">Faktyczna</th>
                         <th className="col-performer">Wykonawca</th>
                         <th className="col-status">Status</th>
                         <th className="col-volunteer">Wolontariusz</th>
@@ -104,6 +136,9 @@ const Reception = () => {
                         return (
                             <tr key={perf.id} className={perf.isBreak ? 'row-break' : `row-${perf.status}`}>
                                 <td className="col-time">{perf.plannedStartTime?.substring(0, 5)}</td>
+                                <td className="col-time-predicted">
+                                    {renderPredictedTime(perf)}
+                                </td>
                                 <td className="col-performer">
                                     {perf.isBreak ? <strong>{perf.performerName}</strong> : perf.performerName}
                                 </td>
@@ -143,14 +178,14 @@ const Reception = () => {
                                         <div>
                                             {perf.volunteer ? (
                                                 <>
-                                                    <div style={{ fontWeight: 600 }}>{perf.volunteer.name}</div>
-                                                    <small style={{ color: '#2980b9' }}>
+                                                    <div>{perf.volunteer.name}</div>
+                                                    <small style={{ color: 'var(--link-color)' }}>
                                                         <a href={`tel:${perf.volunteer.phone}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                                                             {perf.volunteer.phone}
                                                         </a>
                                                     </small>
                                                 </>
-                                            ) : <span style={{ color: '#ccc' }}>---</span>}
+                                            ) : <span >---</span>}
                                         </div>
                                     )}
                                 </td>
@@ -199,7 +234,7 @@ const Reception = () => {
                                                         const prevMap = {
                                                             'arrived_school': 'none',
                                                             'arrived_venue': 'none',
-                                                            'called': 'arrived_venue', // Zakładamy powrót do stanu "obecny"
+                                                            'called': 'arrived_venue',
                                                             'coming': 'called',
                                                             'at-stage': 'coming',
                                                             'performing': 'at-stage'
@@ -232,7 +267,6 @@ const Reception = () => {
                 </table>
             </div>
 
-            {/* Panel dodawania przerwy */}
             <div className="add-section">
                 <div className="add-panel">
                     <span>Dodaj przerwę:</span>

@@ -5,6 +5,7 @@
     background: white;
     overflow: hidden;
     box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    opacity: 0.8;
 }
 
 .table-custom {
@@ -20,6 +21,13 @@
     vertical-align: middle;
 }
 
+.table-custom th {
+    /*background-color: rgba(97, 113, 128, 0.69);*/
+    /*color: white;*/
+    /*border-bottom: 2px solid #668091;*/
+    /*box-shadow: 0 10px 30px rgba(0,0,0,0.08);*/
+}
+
 .hidden {
     display: none;
 }
@@ -33,22 +41,25 @@
    ========================================================================== */
 
 /* Overview */
-.table-view-overview .col-time { width: 15%; font-weight: bold; }
-.table-view-overview .col-performer { width: 55%;  }
+.table-view-overview .col-time { width: 15%;  }
+.table-view-overview .col-performer { width: 55%; text-align: left; }
 .table-view-overview .col-status { width: 30%; }
 
 /* Reception */
 .table-view-reception .col-time { width: 10%; }
+.table-view-reception .col-time-predicted { width: 10%; }
 .table-view-reception .col-performer { width: 45%; text-align: left;}
-.table-view-reception .col-volunteer { width: 20%; color: #666; }
+.table-view-reception .col-volunteer { width: 20%; }
 .table-view-reception .col-actions { width: 25%; text-align: center; }
 .table-reception th:last-child { width: 350px; }
 
 /* Stage */
 .table-view-stage .col-time { width: 10%; }
-.table-view-stage .col-performer { width: 40%; font-weight: bold; }
+.table-view-stage .col-performer { width: 40%;  }
 .table-view-stage .col-diff { width: 20%; }
 .table-view-stage .col-status { width: 30%; }
+
+
 
 /* ==========================================================================
    3. STYLIZACJA WIERSZY I STATUSÓW (BADGES)
@@ -62,14 +73,15 @@
     padding: 5px 10px;
      
     font-size: 0.85rem;
-    font-weight: 600;
+    /*font-weight: 600;*/
     display: inline-block;
+    text-transform: uppercase;
 }
 
 .badge-none { display: none; }
 .badge-arrived { background-color: var(--status-arrived); color: white; }
 .badge-called { background-color: var(--status-called); color: white; }
-.badge-coming { background-color: #d35400; color: white; }
+.badge-coming { background-color: var(--status-coming); color: white; }
 .badge-stage { background-color: var(--status-stage); color: white; }
 .badge-live { background-color: var(--status-live); color: white; animation: blink 1s infinite; }
 .badge-after { background-color: var(--status-after); color: #7f8c8d; }
@@ -166,3 +178,4 @@
     color: #666;
     font-style: italic;
 }
+

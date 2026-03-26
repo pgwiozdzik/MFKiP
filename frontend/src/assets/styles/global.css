@@ -1,11 +1,23 @@
+@import url(https://fonts.googleapis.com/css?family=Roboto:400,700,900,500,300|Montserrat:400,700&subset=latin,greek-ext,vietnamese,cyrillic-ext,latin-ext,cyrillic);
 body {
     /*background-image: url("/angel.jpeg");*/
     margin: 0;
-    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 400;
     background-color: var(--bg-light);
-    color: var(--text-dark);
+    color: var(--primary);
 }
-
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: url("/grafika_tlo.jpg");
+    background-repeat: no-repeat;
+    background-position: center top;
+    background-size: auto 100%;
+    opacity: 0.2; /* 50% transparency */
+    z-index: -1;
+}
 .wrapper {
     padding: 20px;
     max-width: 1200px;
@@ -37,26 +49,77 @@ body {
     justify-content: center;
     gap: 12px;
 }
+/*.header-right {*/
+/*    flex: 4;*/
+/*    display: flex;*/
+/*    align-items: center;*/
+/*    justify-content: right;*/
+/*    gap: 12px;*/
+/*}*/
 .header-right {
     flex: 4;
     display: flex;
+    justify-content: flex-end;
     align-items: center;
-    justify-content: right;
-    gap: 12px;
+    text-align: right;
+}
+
+.day-info-wrapper {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.day-name-main {
+    font-size: 1.2rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-main); /* lub kolor, którego używasz dla app-name-main */
+}
+
+.day-date-sub {
+    font-size: 0.9rem;
+    font-weight: 400;
+    color: var(--text-sub); /* lub #666 - spójnie z app-name-sub */
+    opacity: 0.8;
+}
+
+/*.app-title-container {*/
+/*    display: flex;*/
+/*    align-items: center;*/
+/*    gap: 10px;*/
+/*}*/
+
+.day-name  {
+    /*font-weight: bold;*/
+    font-size: 1.5rem;
+    font-weight: 500;
+
 }
 
 .app-title-container {
     display: flex;
-    align-items: center;
-    gap: 10px;
+    align-items: center; /* Wyrównuje badge roli do środka wysokości tekstu */
+    gap: 15px;
 }
 
-.app-name, .day-name  {
-    font-weight: bold;
-    font-size: 2rem;
-    color: var(--primary);
+.app-name-wrapper {
+    display: flex;
+    flex-direction: column; /* Ustawia linijki jedna pod drugą */
+    line-height: 1.1;       /* Zmniejsza odstępy między liniami */
 }
 
+.app-name-main {
+    font-size: 1.1rem;      /* Główna nazwa (nieco mniejsza niż oryginalne 2rem, by pomieścić tekst) */
+    font-weight: 500;
+    /*text-transform: uppercase; !* Opcjonalnie: dla podkreślenia rangi festiwalu *!*/
+}
+
+.app-name-sub {
+    font-size: .8rem;        /* Wyraźnie mniejsza czcionka dla patrona */
+    font-weight: normal;
+    color: #666;            /* Opcjonalnie: lekko szary kolor, by nie odciągać uwagi */
+}
 .role-badge {
     display: flex;
     align-items: center;
@@ -78,23 +141,25 @@ body {
 }
 
 .logo-placeholder {
-    background-color: var(--primary);
     color: white;
     width: 40px;
     height: 40px;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-weight: bold;
-    font-size: 24px;
+    /*font-weight: bold;*/
+    /*font-size: 24px;*/
 }
 
 .big-clock {
-    font-size: 3rem;
-    font-weight: bold;
+    font-size: 2.5rem;
+    /*font-weight: bold;*/
     padding: 4px 25px;
+    /*font-weight: 500;*/
 
 }
+
+
 
 .logo-link {
     cursor: pointer;

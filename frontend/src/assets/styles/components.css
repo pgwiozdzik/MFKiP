@@ -1,2 +1,7 @@
-
+.input-field {
+    padding: 8px;
+    border: 1px solid #ccc;
+    background-color: white;
+    /*font-size: 14px;*/
+}
 

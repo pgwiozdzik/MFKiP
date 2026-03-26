@@ -23,7 +23,7 @@ const Header = ({ userRole, onLogout }) => {
             try {
                 const data = await apiService.getActiveDay();
                 if (data && data.name) {
-                    setActiveDay(data.name);
+                    setActiveDay(data);
                 }
             } catch (err) {
                 console.error("Błąd pobierania dnia:", err);
@@ -70,12 +70,18 @@ const Header = ({ userRole, onLogout }) => {
                     <img src="/logo.png" alt="Logo MFKiP" className="logo-img" />
                 </div>
                 <div className="app-title-container">
-                    <span className="app-name">MFKiP</span>
+                    <div className="app-name-wrapper">
+                        <span className="app-name-main">Międzynarodowy Festiwal</span>
+                        <span className="app-name-main">Kolęd i Pastorałek</span>
+                        <span className="app-name-sub">
+            im. ks. Kazimierza Szwarlika
+        </span>
+                    </div>
                     {userRole && (
                         <span className="role-badge">
-                            <span className="separator">|</span>
+            <span className="separator">|</span>
                             {roleLabels[userRole]}
-                        </span>
+        </span>
                     )}
                 </div>
             </div>
@@ -85,7 +91,15 @@ const Header = ({ userRole, onLogout }) => {
             </div>
 
             <div className="header-right">
-                <span className="day-name">{activeDay}</span>
+                <div className="day-info-wrapper">
+                    {/* Nazwa dnia (np. Czwartek) - analogicznie do nazwy głównej */}
+                    <span className="day-name-main">{activeDay?.name || "Brak dnia"}</span>
+
+                    {/* Data (np. 26.03.2026) - analogicznie do imienia patrona */}
+                    <span className="day-date-sub">
+            {activeDay?.date ? new Date(activeDay.date).toLocaleDateString('pl-PL') : ""}
+        </span>
+                </div>
             </div>
         </header>
     );

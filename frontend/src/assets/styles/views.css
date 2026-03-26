@@ -23,6 +23,6 @@
 }
 
 .row-live td {
-    font-weight: bold;
+    /*font-weight: bold;*/
     font-size: 1.3rem; /* Większa czcionka dla aktualnego występu */
 }
