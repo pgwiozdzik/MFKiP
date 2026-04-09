@@ -1,40 +1,64 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { STATUS_CONFIG } from '../config/statusConfig';
 import { apiService } from '../api/apiService.js';
 import { useWebSockets } from '../hooks/useWebSockets.js';
+import { calculatePredictedTimes, getPredictedTimeData } from '../config/timeUtils.js';
+import '../assets/styles/table.css';
 
 const Overview = () => {
     const [schedule, setSchedule] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         try {
-            const data = await apiService.getAllPerformances();
-            setSchedule(data);
+            // 1. Najpierw pobierz informacje o tym, który dzień jest aktywny
+            const activeDay = await apiService.getActiveDay();
+
+            if (!activeDay || !activeDay.id) {
+                setError("Brak aktywnego dnia festiwalu");
+                setLoading(false);
+                return;
+            }
+
+            // 2. Pobierz występy TYLKO dla tego konkretnego dnia
+            const data = await apiService.getPerformancesByDay(activeDay.id);
+
+            // 3. Stabilne sortowanie (chronologiczne)
+            const sorted = [...data].sort((a, b) => {
+                if (a.plannedStartTime !== b.plannedStartTime) {
+                    return a.plannedStartTime.localeCompare(b.plannedStartTime);
+                }
+                return a.id - b.id;
+            });
+
+            // 4. Przeliczanie czasów (opóźnienia na podstawie aktualnego stanu)
+            const withTimes = calculatePredictedTimes(sorted);
+
+            setSchedule(withTimes);
             setLoading(false);
+            setError(null);
         } catch (err) {
+            console.error("Błąd Overview:", err);
             setError("W oczekiwaniu na kolejną edycję");
             setLoading(false);
         }
-    };
+    }, []);
 
-    // WYWOŁANIE HOOKA:
-    // Subskrybujemy kanał i mówimy co zrobić, gdy przyjdzie "UPDATE"
+    // Reaguj na UPDATE z WebSocket (zarówno zmiana statusu występu, jak i zmiana aktywnego dnia przez Admina)
     useWebSockets('/topic/performances', (message) => {
         if (message === "UPDATE") {
-            console.log("WS: Odświeżam dane Overview...");
             loadData();
         }
     });
 
     useEffect(() => {
         loadData();
-    }, []);
+    }, [loadData]);
 
     const formatTime = (timeString) => timeString ? timeString.substring(0, 5) : "--:--";
 
-    if (loading) return <div className="wrapper">Inicjalizacja...</div>;
+    if (loading) return <div className="wrapper">Inicjalizacja podglądu...</div>;
     if (error) return <div className="wrapper error-message">{error}</div>;
 
     return (
@@ -44,24 +68,46 @@ const Overview = () => {
                     <thead>
                     <tr>
                         <th className="col-time">Planowa</th>
+                        <th className="col-time-predicted">Faktyczna</th>
                         <th className="col-performer">Wykonawca</th>
                         <th className="col-status">Status</th>
                     </tr>
                     </thead>
                     <tbody>
-                    {schedule.map(row => (
-                        <tr key={row.id} className={row.isBreak ? 'row-break' : ''}>
-                            <td className="col-time">{formatTime(row.plannedStartTime)}</td>
-                            <td className="col-performer">
-                                {row.isBreak ? <strong>{row.performerName}</strong> : row.performerName}
-                            </td>
-                            <td className="col-status">
-                                    <span className={`status-badge badge-${row.status}`}>
-                                        {STATUS_CONFIG[row.status]?.label || row.status}
-                                    </span>
-                            </td>
-                        </tr>
-                    ))}
+                    {schedule.map(row => {
+                        // Pobieramy dane o czasie (wartość i kolor) z centralnego pliku
+                        const timeData = getPredictedTimeData(row);
+                        const config = STATUS_CONFIG[row.status] || {};
+
+                        return (
+                            <tr key={row.id} className={row.isBreak ? 'row-break' : `row-${row.status}`}>
+                                {/* Kolumna: Czas Planowany */}
+                                <td className="col-time">
+                                    {formatTime(row.plannedStartTime)}
+                                </td>
+
+                                {/* Kolumna: Czas Faktyczny (z kolorowaniem) */}
+                                <td className="col-time-predicted" style={{
+                                    color: timeData.color, fontStyle: timeData.isActual ? 'normal' : 'italic',
+                                    // fontWeight: timeData.isActual ? 'bold' : 'normal'
+                                }}>
+                                    {timeData.time}
+                                </td>
+
+                                {/* Kolumna: Wykonawca */}
+                                <td className="col-performer">
+                                    {row.isBreak ? <strong>{row.performerName}</strong> : row.performerName}
+                                </td>
+
+                                {/* Kolumna: Status */}
+                                <td className="col-status">
+                                        <span className={`status-badge ${config.class}`}>
+                                            {config.label || row.status}
+                                        </span>
+                                </td>
+                            </tr>
+                        );
+                    })}
                     </tbody>
                 </table>
             </div>

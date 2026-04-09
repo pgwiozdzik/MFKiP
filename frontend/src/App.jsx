@@ -5,6 +5,7 @@ import Overview from './views/Overview';
 import Login from './views/Login';
 import Stage from './views/Stage';
 import Reception from './views/Reception';
+import Admin from './views/Admin';
 
 function App() {
     // 1. Inicjalizujemy stan z localStorage
@@ -25,6 +26,7 @@ function App() {
     const renderMainView = () => {
         switch (userRole) {
             case 'admin':
+                return <Admin />;
             case 'stage':
                 return <Stage />;
             case 'reception':

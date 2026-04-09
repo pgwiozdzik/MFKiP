@@ -52,4 +52,10 @@ public class PerformanceController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @GetMapping("/day/{dayId}")
+    public List<Performance> getPerformancesByDay(@PathVariable Long dayId) {
+        // Zakładając, że w encji Performance masz pole: Day day
+        return performanceRepository.findByDayIdOrderByPlannedStartTimeAsc(dayId);
+    }
 }

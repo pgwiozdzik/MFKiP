@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import { useNavigate, useLocation } from 'react-router-dom'; // Dodano useLocation
 import { apiService } from '../api/apiService.js';
+import {useWebSockets} from "../hooks/useWebSockets.js";
 
 const Header = ({ userRole, onLogout }) => {
     const [time, setTime] = useState(new Date());
@@ -13,8 +14,28 @@ const Header = ({ userRole, onLogout }) => {
     const roleLabels = {
         reception: 'Recepcja',
         stage: 'Scena',
-        admin: 'Administrator'
+        admin: 'Admin'
     };
+
+    const fetchDay = useCallback(async () => {
+        try {
+            const data = await apiService.getActiveDay();
+            if (data && data.name) {
+                setActiveDay(data);
+            }
+        } catch (err) {
+            console.error("Błąd pobierania dnia:", err);
+            setActiveDay({ name: "2026", date: null });
+        }
+    }, []);
+
+    // SUBSKRYPCJA WEBSOCKET: Gdy przyjdzie UPDATE, odświeżamy aktywny dzień
+    useWebSockets('/topic/performances', (message) => {
+        if (message === "UPDATE") {
+            console.log("Header: Wykryto zmianę dnia, odświeżam...");
+            fetchDay();
+        }
+    });
 
     useEffect(() => {
         const timer = setInterval(() => setTime(new Date()), 1000);
@@ -79,7 +100,6 @@ const Header = ({ userRole, onLogout }) => {
                     </div>
                     {userRole && (
                         <span className="role-badge">
-            <span className="separator">|</span>
                             {roleLabels[userRole]}
         </span>
                     )}
@@ -93,7 +113,7 @@ const Header = ({ userRole, onLogout }) => {
             <div className="header-right">
                 <div className="day-info-wrapper">
                     {/* Nazwa dnia (np. Czwartek) - analogicznie do nazwy głównej */}
-                    <span className="day-name-main">{activeDay?.name || "Brak dnia"}</span>
+                    <span className="day-name-main">{activeDay?.name || "2026"}</span>
 
                     {/* Data (np. 26.03.2026) - analogicznie do imienia patrona */}
                     <span className="day-date-sub">

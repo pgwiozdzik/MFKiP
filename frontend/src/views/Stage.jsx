@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { apiService } from '../api/apiService.js';
 import { STATUS_CONFIG } from '../config/statusConfig';
 import { useWebSockets } from '../hooks/useWebSockets.js';
+import { calculatePredictedTimes, getPredictedTimeData } from '../config/timeUtils.js';
 import '../assets/styles/table.css';
 
 const Stage = () => {
@@ -10,15 +11,29 @@ const Stage = () => {
 
     const loadData = useCallback(async () => {
         try {
-            const data = await apiService.getAllPerformances();
-            // Stabilne sortowanie (identyczne jak w pozostałych widokach)
+            // 1. Pobierz aktywny dzień
+            const activeDay = await apiService.getActiveDay();
+
+            if (!activeDay || !activeDay.id) {
+                setLoading(false);
+                return;
+            }
+
+            // 2. Pobierz występy tylko dla tego dnia
+            const data = await apiService.getPerformancesByDay(activeDay.id);
+
+            // 3. Stabilne sortowanie (chronologiczne)
             const sorted = [...data].sort((a, b) => {
                 if (a.plannedStartTime !== b.plannedStartTime) {
                     return a.plannedStartTime.localeCompare(b.plannedStartTime);
                 }
                 return a.id - b.id;
             });
-            setPerformances(sorted);
+
+            // 4. Przeliczanie czasów (uwzględniając ewentualne opóźnienia)
+            const withPredictedTimes = calculatePredictedTimes(sorted);
+
+            setPerformances(withPredictedTimes);
             setLoading(false);
         } catch (error) {
             console.error("Błąd ładowania Stage:", error);
@@ -26,7 +41,7 @@ const Stage = () => {
         }
     }, []);
 
-    // Nasłuchiwanie na zmiany z innych stanowisk
+    // Nasłuchiwanie na zmiany (statusy, zmiany kolejności lub zmiana aktywnego dnia)
     useWebSockets('/topic/performances', (message) => {
         if (message === "UPDATE") loadData();
     });
@@ -38,14 +53,25 @@ const Stage = () => {
     const handleStatusChange = async (id, newStatus) => {
         try {
             await apiService.updatePerformanceStatus(id, newStatus);
-            // WebSocket odświeży listę automatycznie
         } catch (error) {
             alert("Błąd zmiany statusu na scenie");
         }
     };
 
-    if (loading) return <div className="wrapper">Inicjalizacja widoku sceny...</div>;
+    const renderPredictedTime = (perf) => {
+        const { time, color, isActual } = getPredictedTimeData(perf);
+        return (
+            <span style={{
+                color,
+                fontStyle: isActual ? 'normal' : 'italic',
+                fontWeight: isActual ? 'bold' : 'normal'
+            }}>
+                {time}
+            </span>
+        );
+    };
 
+    if (loading) return <div className="wrapper">Inicjalizacja widoku sceny...</div>;
     return (
         <div className="wrapper">
             <div className="table-container">
@@ -53,6 +79,7 @@ const Stage = () => {
                     <thead>
                     <tr>
                         <th className="col-time">Planowa</th>
+                        <th className="col-time-predicted">Faktyczna</th>
                         <th className="col-performer">Wykonawca</th>
                         <th className="col-status">Status</th>
                         <th className="col-notes hidden">Uwagi Scena</th>
@@ -65,7 +92,10 @@ const Stage = () => {
 
                         return (
                             <tr key={perf.id} className={perf.isBreak ? 'row-break' : `row-${perf.status}`}>
-                                <td className="col-time">{perf.plannedStartTime?.substring(0, 5)}</td>
+                                <td className="col-time">{perf.plannedStartTime.substring(0, 5)}</td>
+                                <td className="col-time-predicted" style={{ color: getPredictedTimeData(perf).color, fontWeight: 'bold' }}>
+                                    {getPredictedTimeData(perf).time}
+                                </td>
                                 <td className="col-performer">
                                     {perf.isBreak ? <strong>{perf.performerName}</strong> : perf.performerName}
                                 </td>
@@ -84,14 +114,14 @@ const Stage = () => {
 
                                             {/* KROK 1: Wezwanie (jeśli Recepcja zapomniała) */}
                                             {(['none', 'arrived_school', 'arrived_venue'].includes(perf.status)) && (
-                                                <button onClick={() => handleStatusChange(perf.id, 'called')} className="btn-call">
+                                                <button onClick={() => handleStatusChange(perf.id, 'called')} className="btn btn-call">
                                                     WEZWIJ
                                                 </button>
                                             )}
 
                                             {/* KROK 2: Potwierdzenie przybycia pod scenę */}
                                             {(perf.status === 'called' || perf.status === 'coming') && (
-                                                <button onClick={() => handleStatusChange(perf.id, 'at-stage')} className="btn-at-stage">
+                                                <button onClick={() => handleStatusChange(perf.id, 'at-stage')} className="btn btn-stage">
                                                     POTWIERDŹ OBECNOŚĆ
                                                 </button>
                                             )}
@@ -105,7 +135,7 @@ const Stage = () => {
 
                                             {/* KROK 4: Koniec występu */}
                                             {perf.status === 'performing' && (
-                                                <button onClick={() => handleStatusChange(perf.id, 'after')} className="btn-after">
+                                                <button onClick={() => handleStatusChange(perf.id, 'after')} className="btn btn-after">
                                                     ZAKOŃCZ
                                                 </button>
                                             )}
@@ -122,7 +152,7 @@ const Stage = () => {
                                                         };
                                                         handleStatusChange(perf.id, prevStates[perf.status] || 'none');
                                                     }}
-                                                    className="btn-reset"
+                                                    className="btn btn-primary"
                                                 >
                                                     COFNIJ
                                                 </button>

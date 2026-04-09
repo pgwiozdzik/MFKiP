@@ -13,4 +13,7 @@ public interface PerformanceRepository extends JpaRepository<Performance, Long> 
 
     @Query("SELECT p FROM Performance p ORDER BY p.changedStartTime ASC, p.id ASC")
     List<Performance> findAllSorted();
+
+    // Pobiera występy po ID dnia i sortuje je chronologicznie
+    List<Performance> findByDayIdOrderByPlannedStartTimeAsc(Long dayId);
 }

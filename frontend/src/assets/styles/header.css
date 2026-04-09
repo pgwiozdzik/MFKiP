@@ -1,0 +1,135 @@
+/* HEADER STYLES */
+.main-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--white);
+    padding: 0 30px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    height: 80px;
+}
+
+.header-left {
+    flex: 4;
+    display: flex;
+    align-items: center;
+    justify-content: left;
+    gap: 12px;
+    height: 75%;
+}
+
+.header-center {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    height: 75%;
+}
+
+.header-right {
+    flex: 4;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    text-align: right;
+    height: 75%;
+}
+
+/* DAY INFO */
+.day-info-wrapper {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.5;
+}
+
+.day-name-main {
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-main);
+}
+
+.day-date-sub {
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: var(--text-sub);
+    opacity: 0.8;
+}
+
+.day-name {
+    font-size: 1.5rem;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+/* APP TITLE */
+.app-title-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    height: 100%;
+}
+
+.app-name-wrapper {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+}
+
+.app-name-main {
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.app-name-sub {
+    font-size: 0.8rem;
+    font-weight: normal;
+    color: #666;
+}
+
+.role-badge {
+    display: flex;
+    align-items: center;
+    font-weight: 200;
+    font-size: 2rem;
+    color: #697475;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    height: 80%;
+    border-left: 2px solid #ddd;
+    padding-left: 10px;
+}
+
+/* LOGO */
+.logo-placeholder {
+    color: white;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.logo-link {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: transform 0.2s ease;
+}
+
+.logo-link:hover {
+    transform: scale(1.05);
+}
+
+.logo-img {
+    height: 60px;
+    width: auto;
+    object-fit: contain;
+}
+
+/* CLOCK */
+.big-clock {
+    font-size: 2.5rem;
+    padding: 4px 25px;
+}

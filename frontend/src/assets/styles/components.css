@@ -1,7 +1,101 @@
+/* ==========================================================================
+   1. PRZYCISKI AKCJI I KONTROLKI
+   ========================================================================== */
+
+/* Kontener główny w komórce */
+.action-buttons-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+}
+
+/* Grupy przycisków */
+.status-actions {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: right;
+    gap: 5px;
+}
+
+.utility-actions {
+    /*flex: 1;*/
+    display: flex;
+    justify-content: left;
+    gap: 5px;
+}
+
+.order-actions {
+    display: flex;
+    gap: 5px;
+}
+
+/* ==========================================================================
+   2. BAZOWA KLASA PRZYCISKU
+   ========================================================================== */
+.btn {
+    flex: 1;
+    padding: 6px 12px;
+    cursor: pointer;
+    border: 1px solid var(--btn-color);
+    background-color: transparent;
+    color: var(--btn-color);
+}
+.btn:hover {
+
+    background-color: var(--btn-color);
+    color: white;
+}
+
+/* ==========================================================================
+   3. WARIANTY KOLORÓW
+   ========================================================================== */
+.btn-primary {
+    --btn-color: var(--primary);
+}
+
+.btn-arrived {
+    --btn-color: var(--status-arrived);
+}
+
+.btn-call {
+    --btn-color: var(--status-called);
+}
+
+.btn-coming {
+    --btn-color: var(--status-coming);
+}
+
+.btn-stage {
+    --btn-color: var(--status-stage);
+}
+
+.btn-no-show {
+    --btn-color: var(--status-noshow);
+}
+
+.btn-ok {
+    --btn-color: var(--status-stage);
+}
+
+.btn-cancel {
+    --btn-color: var(--status-live);
+}
+
+/* ==========================================================================
+   5. PRZYCISKI EDYCJI I ORDER
+   ========================================================================== */
+.btn-edit,
+.btn-order {
+    --btn-color: var(--primary);
+}
+
+/* ==========================================================================
+   6. INPUT
+   ========================================================================== */
 .input-field {
     padding: 8px;
     border: 1px solid #ccc;
     background-color: white;
-    /*font-size: 14px;*/
 }
-

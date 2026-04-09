@@ -8,7 +8,7 @@ import zti.backend.repository.VolunteerRepository;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/volunteers") // To musi pasować do Twojego API_URL + /volunteers
+@RequestMapping("/api/volunteers")
 @CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 public class VolunteerController {
 
@@ -17,7 +17,16 @@ public class VolunteerController {
 
     @GetMapping("/all")
     public List<Volunteer> getAllVolunteers() {
-        // Pobieramy wszystkich wolontariuszy z bazy mfkip.volunteers
         return volunteerRepository.findAll();
+    }
+
+    @PostMapping("/add")
+    public Volunteer addVolunteer(@RequestBody Volunteer volunteer) {
+        return volunteerRepository.save(volunteer);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteVolunteer(@PathVariable Long id) {
+        volunteerRepository.deleteById(id);
     }
 }

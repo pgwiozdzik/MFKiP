@@ -3,6 +3,8 @@ export const calculatePredictedTimes = (performances) => {
     let currentDelay = 0;
 
     return performances.map((perf) => {
+        if (!perf.plannedStartTime) return perf;
+
         const [planH, planM] = perf.plannedStartTime.split(':').map(Number);
         const baseDate = new Date();
         baseDate.setHours(planH, planM, 0, 0);
@@ -21,4 +23,28 @@ export const calculatePredictedTimes = (performances) => {
 
         return { ...perf, predictedTime: predictedTimeStr };
     });
+};
+
+// Nowa funkcja pomocnicza dla widoków
+export const getPredictedTimeData = (perf) => {
+    if (perf.actualStartTime) {
+        return {
+            time: perf.actualStartTime.substring(0, 5),
+            color: 'inherit',
+            isActual: true
+        };
+    }
+
+    const planned = perf.plannedStartTime?.substring(0, 5);
+    const predicted = perf.predictedTime;
+
+    let color = 'inherit';
+    if (predicted < planned) color = 'var(--time-early)';
+    else if (predicted > planned) color = 'var(--time-delay)';
+
+    return {
+        time: predicted,
+        color: color,
+        isActual: false
+    };
 };

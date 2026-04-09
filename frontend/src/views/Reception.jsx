@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { apiService } from '../api/apiService.js';
 import { STATUS_CONFIG } from '../config/statusConfig';
 import { useWebSockets } from '../hooks/useWebSockets.js';
-import { calculatePredictedTimes } from '../config/timeUtils.js';
+import { calculatePredictedTimes, getPredictedTimeData } from '../config/timeUtils.js';
 import '../assets/styles/table.css';
 
 const Reception = () => {
@@ -14,11 +14,16 @@ const Reception = () => {
 
     const loadData = useCallback(async () => {
         try {
+            // 1. Pobierz aktywny dzień
+            const activeDay = await apiService.getActiveDay();
+
+            // 2. Pobierz wolontariuszy oraz występy TYLKO dla aktywnego dnia
             const [perfData, volData] = await Promise.all([
-                apiService.getAllPerformances(),
+                apiService.getPerformancesByDay(activeDay.id),
                 apiService.getAllVolunteers()
             ]);
 
+            // 3. Sortowanie chronologiczne
             const sorted = [...perfData].sort((a, b) => {
                 if (a.plannedStartTime !== b.plannedStartTime) {
                     return a.plannedStartTime.localeCompare(b.plannedStartTime);
@@ -26,17 +31,19 @@ const Reception = () => {
                 return a.id - b.id;
             });
 
+            // 4. Obliczanie przewidywanych czasów
             const withPredictedTimes = calculatePredictedTimes(sorted);
 
             setPerformances(withPredictedTimes);
             setVolunteers(volData);
             setLoading(false);
         } catch (error) {
-            console.error("Błąd ładowania danych:", error);
+            console.error("Błąd ładowania danych recepcji:", error);
             setLoading(false);
         }
     }, []);
 
+    // Reaguj na sygnał UPDATE (zmiana statusu LUB zmiana aktywnego dnia przez Admina)
     useWebSockets('/topic/performances', (message) => {
         if (message === "UPDATE") loadData();
     });
@@ -59,6 +66,7 @@ const Reception = () => {
         try {
             await apiService.updatePerformance(id, editData);
             setEditingId(null);
+            // WebSocket wyśle UPDATE, który odświeży listę
         } catch (error) {
             alert("Błąd zapisu danych");
         }
@@ -81,29 +89,14 @@ const Reception = () => {
     };
 
     const renderPredictedTime = (perf) => {
-        // 1. Jeśli actualStartTime nie jest nullem, wstaw go na czarno
-        if (perf.actualStartTime) {
-            return (
-                <span>
-                    {perf.actualStartTime.substring(0, 5)}
-                </span>
-            );
-        }
-
-        // 2. Jeśli actualStartTime jest nullem, porównaj predicted z planned
-        const planned = perf.plannedStartTime?.substring(0, 5);
-        const predicted = perf.predictedTime;
-
-        let color;
-        if (predicted < planned) {
-            color = 'var(--time-early)'; // Zielony (przyspieszenie)
-        } else if (predicted > planned) {
-            color = 'var(--time-delay)'; // Czerwony (opóźnienie)
-        }
-
+        const { time, color, isActual } = getPredictedTimeData(perf);
         return (
-            <span style={{ color}}>
-                {predicted}
+            <span style={{
+                color,
+                fontStyle: isActual ? 'normal' : 'italic',
+                fontWeight: isActual ? 'bold' : 'normal'
+            }}>
+                {time}
             </span>
         );
     };
@@ -215,17 +208,17 @@ const Reception = () => {
                                                 {/* PROGRESJA STATUSÓW */}
                                                 {perf.status === 'none' && (
                                                     <>
-                                                        <button onClick={() => handleStatusChange(perf.id, 'arrived_school')} className="btn-arrived">W SZKOLE</button>
-                                                        <button onClick={() => handleStatusChange(perf.id, 'arrived_venue')} className="btn-arrived">W ARENIE</button>
+                                                        <button onClick={() => handleStatusChange(perf.id, 'arrived_school')} className="btn btn-arrived">W SZKOLE</button>
+                                                        <button onClick={() => handleStatusChange(perf.id, 'arrived_venue')} className="btn btn-arrived">W ARENIE</button>
                                                     </>
                                                 )}
 
                                                 {(perf.status === 'arrived_school' || perf.status === 'arrived_venue') && (
-                                                    <button onClick={() => handleStatusChange(perf.id, 'called')} className="btn-call">WEZWIJ</button>
+                                                    <button onClick={() => handleStatusChange(perf.id, 'called')} className="btn btn-call">WEZWIJ</button>
                                                 )}
 
                                                 {perf.status === 'called' && (
-                                                    <button onClick={() => handleStatusChange(perf.id, 'coming')} className="btn-coming">W DRODZE</button>
+                                                    <button onClick={() => handleStatusChange(perf.id, 'coming')} className="btn btn-coming">W DRODZE</button>
                                                 )}
 
                                                 {/* DYNAMICZNE COFNIJ (UNDO) */}
@@ -240,20 +233,20 @@ const Reception = () => {
                                                             'performing': 'at-stage'
                                                         };
                                                         handleStatusChange(perf.id, prevMap[perf.status] || 'none');
-                                                    }} className="btn-reset">COFNIJ</button>
+                                                    }} className="btn btn-primary">COFNIJ</button>
                                                 )}
                                             </div>
 
                                             <div className="utility-actions">
-                                                <button onClick={() => handleEditClick(perf)} className="btn-edit">✎</button>
+                                                <button onClick={() => handleEditClick(perf)} className="btn btn-edit">✎</button>
                                                 <div className="order-actions">
                                                     <button
                                                         onClick={() => handleOrderChange(perf, 'up')}
-                                                        className={`btn-order ${isFirst ? 'invisible' : ''}`}
+                                                        className={`btn btn-order ${isFirst ? 'invisible' : ''}`}
                                                     > ▲ </button>
                                                     <button
                                                         onClick={() => handleOrderChange(perf, 'down')}
-                                                        className={`btn-order ${isLast ? 'invisible' : ''}`}
+                                                        className={`btn btn-order ${isLast ? 'invisible' : ''}`}
                                                     > ▼ </button>
                                                 </div>
                                             </div>
@@ -273,7 +266,7 @@ const Reception = () => {
                     <input type="time" className="input-field" />
                     <span>DO:</span>
                     <input type="time" className="input-field" />
-                    <button className="btn-primary">DODAJ</button>
+                    <button className="btn btn-primary">DODAJ</button>
                 </div>
             </div>
         </div>
