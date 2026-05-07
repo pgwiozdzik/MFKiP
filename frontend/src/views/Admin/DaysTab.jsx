@@ -11,6 +11,11 @@ const DaysTab = ({ dayName, onSetActiveRequest }) => {
     const [loading, setLoading] = useState(true);
     const [editingId, setEditingId] = useState(null);
     const [editData, setEditData] = useState({});
+    const [newPerf, setNewPerf] = useState({
+        performerName: '',
+        plannedStartTime: '12:00:00',
+        volunteerId: ''
+    });
 
     const loadTabContent = useCallback(async () => {
         try {
@@ -50,6 +55,10 @@ const DaysTab = ({ dayName, onSetActiveRequest }) => {
         loadTabContent();
     }, [loadTabContent]);
 
+    useEffect(() => {
+        setNewPerf({ performerName: '', plannedStartTime: '12:00:00', volunteerId: '' });
+    }, [dayName]);
+
     const isThisDayActive = dayData?.active === true || dayData?.isActive === true;
 
     const handleEdit = (perf) => {
@@ -70,10 +79,33 @@ const DaysTab = ({ dayName, onSetActiveRequest }) => {
         }
     };
 
-    const handleAddNew = async () => {
-        if (!dayData?.id) return;
-        const newPerf = { performerName: "Nowy Wykonawca", plannedStartTime: "12:00:00", status: 'none', day: { id: dayData.id } };
-        try { await apiService.addPerformance(newPerf); } catch (e) { alert("Błąd dodawania"); }
+    const handleAddNew = async (e) => {
+        if (e) e.preventDefault();
+        if (!dayData?.id || !newPerf.performerName.trim()) return;
+
+        // Zabezpieczenie formatu czasu: HH:mm -> HH:mm:00
+        let formattedTime = newPerf.plannedStartTime;
+        if (formattedTime.split(':').length === 2) {
+            formattedTime += ':00';
+        }
+
+        const payload = {
+            performerName: newPerf.performerName,
+            plannedStartTime: formattedTime, // Teraz ma format HH:mm:ss
+            status: 'none',
+            day: { id: dayData.id },
+            volunteer: newPerf.volunteerId ? { id: parseInt(newPerf.volunteerId) } : null,
+            isBreak: false // Warto wysłać jawnie
+        };
+
+        try {
+            await apiService.addPerformance(payload);
+            setNewPerf({ performerName: '', plannedStartTime: '12:00:00', volunteerId: '' });
+        } catch (e) {
+            // Wyświetl szczegóły błędu w konsoli, ułatwi to diagnozę
+            console.error("Błąd 500 szczegóły:", e.response?.data);
+            alert("Błąd podczas dodawania: " + (e.response?.data || "Błąd serwera"));
+        }
     };
 
     const renderPredictedTime = (perf) => {
@@ -155,15 +187,53 @@ const DaysTab = ({ dayName, onSetActiveRequest }) => {
             </table>
 
             <div className="add-section admin-footer-actions">
-                <div className="add-panel">
-                    <button className="btn btn-ok" onClick={handleAddNew}>+ DODAJ WYKONAWCĘ</button>
+                <form className="add-panel" onSubmit={handleAddNew}>
+                    <div className="input-group">
+                        <span>Godz:</span>
+                        <input
+                            type="time"
+                            step="1"
+                            className="input-field"
+                            style={{ width: '130px' }}
+                            value={newPerf.plannedStartTime}
+                            onChange={(e) => setNewPerf({...newPerf, plannedStartTime: e.target.value})}
+                        />
+                    </div>
+
+                    <input
+                        type="text"
+                        placeholder="Nazwa wykonawcy / przerwy"
+                        className="input-field"
+                        style={{ flex: 2 }}
+                        value={newPerf.performerName}
+                        onChange={(e) => setNewPerf({...newPerf, performerName: e.target.value})}
+                        required
+                    />
+
+                    <select
+                        className="input-field"
+                        style={{ flex: 1 }}
+                        value={newPerf.volunteerId}
+                        onChange={(e) => setNewPerf({...newPerf, volunteerId: e.target.value})}
+                    >
+                        <option value="">Wybierz wolontariusza</option>
+                        {volunteers.map(v => (
+                            <option key={v.id} value={v.id}>{v.name}</option>
+                        ))}
+                    </select>
+
+                    <button type="submit" className="btn btn-ok">
+                        + DODAJ
+                    </button>
+
+                    <div style={{ flex: 1 }}></div>
 
                     {!isThisDayActive && (
-                        <button className="btn btn-primary" onClick={() => onSetActiveRequest(dayData.id)}>
+                        <button type="button" className="btn btn-primary" onClick={() => onSetActiveRequest(dayData.id)}>
                             USTAW JAKO AKTYWNY DZIEŃ
                         </button>
                     )}
-                </div>
+                </form>
             </div>
         </div>
     );

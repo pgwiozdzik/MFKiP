@@ -55,7 +55,57 @@ public class PerformanceController {
 
     @GetMapping("/day/{dayId}")
     public List<Performance> getPerformancesByDay(@PathVariable Long dayId) {
-        // Zakładając, że w encji Performance masz pole: Day day
         return performanceRepository.findByDayIdOrderByPlannedStartTimeAsc(dayId);
+    }
+
+
+    @PostMapping("/add")
+    public ResponseEntity<?> addPerformance(@RequestBody Performance performance) {
+        try {
+            System.out.println("Otrzymano występ: " + performance.getPerformerName());
+
+            Performance saved = performanceRepository.save(performance);
+
+            messagingTemplate.convertAndSend("/topic/performances", "UPDATE");
+
+            return ResponseEntity.ok(saved);
+        } catch (Exception e) {
+            e.printStackTrace(); // To wypisze DOKŁADNY błąd w konsoli IntelliJ/Eclipse
+            return ResponseEntity.status(500).body("Błąd serwera: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updatePerformance(@PathVariable Long id, @RequestBody Performance performanceDetails) {
+        return performanceRepository.findById(id).map(performance -> {
+            try {
+                // Logowanie dla ułatwienia debugowania
+                System.out.println("Edycja występu o ID: " + id);
+
+                // 1. Aktualizacja pól
+                performance.setPerformerName(performanceDetails.getPerformerName());
+                performance.setPlannedStartTime(performanceDetails.getPlannedStartTime());
+                performance.setStatus(performanceDetails.getStatus());
+                performance.setBreak(performanceDetails.isBreak());
+
+                // 2. Obsługa Wolontariusza (zapobiega błędom powiązań)
+                if (performanceDetails.getVolunteer() != null && performanceDetails.getVolunteer().getId() != null) {
+                    performance.setVolunteer(performanceDetails.getVolunteer());
+                } else {
+                    performance.setVolunteer(null);
+                }
+
+                // 3. Zapis
+                Performance updated = performanceRepository.save(performance);
+
+                // 4. Powiadomienie WebSocket
+                messagingTemplate.convertAndSend("/topic/performances", "UPDATE");
+
+                return ResponseEntity.ok(updated);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return ResponseEntity.status(500).body("Błąd bazy danych: " + e.getMessage());
+            }
+        }).orElse(ResponseEntity.notFound().build());
     }
 }

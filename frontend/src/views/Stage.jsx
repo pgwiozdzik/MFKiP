@@ -100,9 +100,9 @@ const Stage = () => {
                                     {perf.isBreak ? <strong>{perf.performerName}</strong> : perf.performerName}
                                 </td>
                                 <td className="col-status">
-                                        <span className={`status-badge ${config.class}`}>
+                                    {perf.isBreak ?"":<span className={`status-badge ${config.class}`}>
                                             {config.label}
-                                        </span>
+                                        </span>}
                                 </td>
                                 <td className="note-stage-cell hidden">
                                     {perf.noteStage}
@@ -141,7 +141,7 @@ const Stage = () => {
                                             )}
 
                                             {/* COFNIJ: Dynamiczny powrót */}
-                                            {perf.status !== 'none' && perf.status !== 'after' && (
+                                            {perf.status !== 'none' && perf.status !== 'after' && !perf.isBreak && (
                                                 <button
                                                     onClick={() => {
                                                         const prevStates = {

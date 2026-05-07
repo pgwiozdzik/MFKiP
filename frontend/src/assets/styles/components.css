@@ -95,7 +95,11 @@
    6. INPUT
    ========================================================================== */
 .input-field {
-    padding: 8px;
+    width: 100%;
+    /*padding: 1px;*/
+    margin: 10px 0;
     border: 1px solid #ccc;
+    font-size: 1.1rem;
+    text-align: center;
     background-color: white;
 }

@@ -64,11 +64,32 @@ const Reception = () => {
 
     const handleSave = async (id) => {
         try {
-            await apiService.updatePerformance(id, editData);
+            // Tworzymy kopię danych do wysłania
+            const payload = { ...editData };
+
+            // 1. Formatujemy czas - Spring LocalTime wymaga HH:mm:ss
+            if (payload.plannedStartTime && payload.plannedStartTime.length === 5) {
+                payload.plannedStartTime += ":00";
+            }
+
+            // 2. Czyścimy obiekt Dnia - nie chcemy go aktualizować, tylko zachować powiązanie
+            if (payload.day && payload.day.id) {
+                payload.day = { id: payload.day.id };
+            }
+
+            // 3. Czyścimy obiekt Wolontariusza
+            if (payload.volunteer && payload.volunteer.id) {
+                payload.volunteer = { id: payload.volunteer.id };
+            } else {
+                payload.volunteer = null;
+            }
+
+            await apiService.updatePerformance(id, payload);
             setEditingId(null);
-            // WebSocket wyśle UPDATE, który odświeży listę
         } catch (error) {
-            alert("Błąd zapisu danych");
+            // To pomoże Ci zobaczyć co dokładnie mówi serwer w konsoli przeglądarki
+            console.error("Szczegóły błędu serwera:", error.response?.data);
+            alert("Błąd zapisu danych. Sprawdź konsolę przeglądarki (F12 -> Network).");
         }
     };
 
@@ -99,6 +120,39 @@ const Reception = () => {
                 {time}
             </span>
         );
+    };
+
+    // Inicjalizacja pustymi wartościami
+    const [breakTimes, setBreakTimes] = useState({ start: '', end: '' });
+
+    const handleAddBreak = async () => {
+        // Prosta walidacja: sprawdź czy pola nie są puste
+        if (!breakTimes.start || !breakTimes.end) {
+            alert("Proszę uzupełnić obie godziny (OD i DO)");
+            return;
+        }
+
+        try {
+            const activeDay = await apiService.getActiveDay();
+            if (!activeDay) return alert("Brak aktywnego dnia!");
+
+            const newBreak = {
+                performerName: "PRZERWA DO " + breakTimes.end,
+                plannedStartTime: breakTimes.start + ":00", // Format HH:mm:ss
+                endTime: breakTimes.end + ":00",
+                status: 'at-stage',
+                isBreak: true,
+                day: { id: activeDay.id }
+            };
+
+            await apiService.addPerformance(newBreak);
+
+            // Czyszczenie pól po sukcesie
+            setBreakTimes({ start: '', end: '' });
+        } catch (error) {
+            console.error("Błąd dodawania przerwy:", error);
+            alert("Nie udało się dodać przerwy");
+        }
     };
 
     if (loading) return <div className="wrapper">Ładowanie danych recepcji...</div>;
@@ -147,7 +201,7 @@ const Reception = () => {
                                             ))}
                                         </select>
                                     ) : (
-                                        <span className={`status-badge ${config.class}`}>
+                                        perf.isBreak ?"":<span className={`status-badge ${config.class}`}>
                                                 {config.label}
                                             </span>
                                     )}
@@ -178,7 +232,7 @@ const Reception = () => {
                                                         </a>
                                                     </small>
                                                 </>
-                                            ) : <span >---</span>}
+                                            ) : <span ></span>}
                                         </div>
                                     )}
                                 </td>
@@ -199,8 +253,8 @@ const Reception = () => {
                                 <td className="col-actions">
                                     {isEditing ? (
                                         <div className="action-buttons editing">
-                                            <button onClick={() => handleSave(perf.id)} className="btn-ok">OK</button>
-                                            <button onClick={handleCancelEdit} className="btn-cancel">X</button>
+                                            <button onClick={() => handleSave(perf.id)} className="btn btn-ok">OK</button>
+                                            <button onClick={handleCancelEdit} className="btn btn-cancel">X</button>
                                         </div>
                                     ) : (
                                         <div className="action-buttons-wrapper">
@@ -222,7 +276,7 @@ const Reception = () => {
                                                 )}
 
                                                 {/* DYNAMICZNE COFNIJ (UNDO) */}
-                                                {perf.status !== 'none' && perf.status !== 'after' && (
+                                                {perf.status !== 'none' && perf.status !== 'after' && perf.status !== 'at-stage' && (
                                                     <button onClick={() => {
                                                         const prevMap = {
                                                             'arrived_school': 'none',
@@ -238,16 +292,16 @@ const Reception = () => {
                                             </div>
 
                                             <div className="utility-actions">
-                                                <button onClick={() => handleEditClick(perf)} className="btn btn-edit">✎</button>
+                                                {perf.isBreak ? "" :<button onClick={() => handleEditClick(perf)} className="btn btn-edit">✎</button>}
                                                 <div className="order-actions">
-                                                    <button
+                                                    {perf.isBreak ? "" :<button
                                                         onClick={() => handleOrderChange(perf, 'up')}
                                                         className={`btn btn-order ${isFirst ? 'invisible' : ''}`}
-                                                    > ▲ </button>
-                                                    <button
+                                                    > ▲ </button>}
+                                                    {perf.isBreak ? "" :<button
                                                         onClick={() => handleOrderChange(perf, 'down')}
                                                         className={`btn btn-order ${isLast ? 'invisible' : ''}`}
-                                                    > ▼ </button>
+                                                    > ▼ </button>}
                                                 </div>
                                             </div>
                                         </div>
@@ -262,11 +316,23 @@ const Reception = () => {
 
             <div className="add-section">
                 <div className="add-panel">
-                    <span>Dodaj przerwę:</span>
-                    <input type="time" className="input-field" />
+                    <span>Dodaj przerwę OD:</span>
+                    <input
+                        type="time"
+                        className="input-field"
+                        value={breakTimes.start}
+                        onChange={(e) => setBreakTimes({...breakTimes, start: e.target.value})}
+                    />
                     <span>DO:</span>
-                    <input type="time" className="input-field" />
-                    <button className="btn btn-primary">DODAJ</button>
+                    <input
+                        type="time"
+                        className="input-field"
+                        value={breakTimes.end}
+                        onChange={(e) => setBreakTimes({...breakTimes, end: e.target.value})}
+                    />
+                    <button className="btn btn-primary" onClick={handleAddBreak}>
+                        DODAJ PRZERWĘ
+                    </button>
                 </div>
             </div>
         </div>

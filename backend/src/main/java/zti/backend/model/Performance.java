@@ -1,6 +1,8 @@
 package zti.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalTime;
@@ -20,6 +22,7 @@ public class Performance {
     private Day day;
 
     @Column(name = "planned_start_time", nullable = false)
+    @JsonFormat(pattern = "HH:mm:ss")
     private LocalTime plannedStartTime;
 
     @Column(name = "changed_start_time")
@@ -41,5 +44,7 @@ public class Performance {
     private Volunteer volunteer;
 
     @Column(name = "is_break")
+    @JsonProperty("isBreak") // To wymusi nazwę "isBreak" w JSONie
     private boolean isBreak = false;
+
 }

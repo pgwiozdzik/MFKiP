@@ -91,19 +91,12 @@
     gap: 10px;
 }
 
-.admin-form .input-field {
+.admin-form{
     flex: 1;
     min-width: 200px;
 }
 
-.input-field {
-    width: 100%;
-    padding: 10px;
-    margin: 10px 0;
-    border: 1px solid #ccc;
-    font-size: 1.1rem;
-    text-align: center;
-}
+
 
 .tab-actions {
     margin-bottom: 20px;

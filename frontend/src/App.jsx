@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import Overview from './views/Overview';
@@ -8,19 +8,56 @@ import Reception from './views/Reception';
 import Admin from './views/Admin';
 
 function App() {
-    // 1. Inicjalizujemy stan z localStorage
-    const [userRole, setUserRole] = useState(localStorage.getItem('userRole'));
+    const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 godziny w milisekundach
 
-    // 2. Funkcja obsługująca zmianę autoryzacji
+    const getInitialAuth = () => {
+        const savedAuth = localStorage.getItem('userAuth');
+        if (!savedAuth) return null;
+
+        const { role, loginTime } = JSON.parse(savedAuth);
+        const now = new Date().getTime();
+
+        // Jeśli czas który upłynął jest większy niż dozwolony - usuń sesję
+        if (now - loginTime > SESSION_DURATION) {
+            localStorage.removeItem('userAuth');
+            return null;
+        }
+        return role;
+    };
+
+    const [userRole, setUserRole] = useState(getInitialAuth());
+
     const handleAuthChange = (role) => {
         if (role) {
-            localStorage.setItem('userRole', role);
+            const authData = {
+                role: role,
+                loginTime: new Date().getTime()
+            };
+            localStorage.setItem('userAuth', JSON.stringify(authData));
             setUserRole(role);
         } else {
-            localStorage.removeItem('userRole');
+            localStorage.removeItem('userAuth');
             setUserRole(null);
         }
     };
+
+    // Dodatkowy efekt: sprawdza ważność sesji przy każdym odświeżeniu/akcji
+    useEffect(() => {
+        const checkSession = () => {
+            const savedAuth = localStorage.getItem('userAuth');
+            if (savedAuth) {
+                const { loginTime } = JSON.parse(savedAuth);
+                if (new Date().getTime() - loginTime > SESSION_DURATION) {
+                    handleAuthChange(null);
+                    alert("Twoja sesja wygasła. Zaloguj się ponownie.");
+                }
+            }
+        };
+
+        // Sprawdzaj co np. 1 minutę
+        const interval = setInterval(checkSession, 60000);
+        return () => clearInterval(interval);
+    }, [SESSION_DURATION]);
 
     // 3. Logika wyboru widoku głównego
     const renderMainView = () => {

@@ -80,30 +80,36 @@ const Overview = () => {
                         const config = STATUS_CONFIG[row.status] || {};
 
                         return (
-                            <tr key={row.id} className={row.isBreak ? 'row-break' : `row-${row.status}`}>
+                            // Zmień w Overview.jsx wewnątrz map()
+                            <tr
+                                key={row.id}
+                                className={`row-${row.status} ${row.isBreak ? 'row-break' : ''}`}
+                            >
                                 {/* Kolumna: Czas Planowany */}
                                 <td className="col-time">
-                                    {formatTime(row.plannedStartTime)}
+                                    {row.isBreak ? "" : formatTime(row.plannedStartTime)}
                                 </td>
 
-                                {/* Kolumna: Czas Faktyczny (z kolorowaniem) */}
+                                {/* Kolumna: Czas Faktyczny */}
                                 <td className="col-time-predicted" style={{
-                                    color: timeData.color, fontStyle: timeData.isActual ? 'normal' : 'italic',
-                                    // fontWeight: timeData.isActual ? 'bold' : 'normal'
+                                    color: row.isBreak ? timeData.color : timeData.color, // Biały kolor jeśli przerwa
+                                    fontStyle: timeData.isActual ? 'normal' : 'italic'
                                 }}>
-                                    {timeData.time}
+                                    {row.isBreak ? "" : timeData.time}
                                 </td>
 
                                 {/* Kolumna: Wykonawca */}
                                 <td className="col-performer">
-                                    {row.isBreak ? <strong>{row.performerName}</strong> : row.performerName}
+                                    {row.isBreak ? `${row.performerName}` : row.performerName}
                                 </td>
 
                                 {/* Kolumna: Status */}
                                 <td className="col-status">
+                                    {row.isBreak ? "" : (
                                         <span className={`status-badge ${config.class}`}>
-                                            {config.label || row.status}
-                                        </span>
+                {config.label || row.status}
+            </span>
+                                    )}
                                 </td>
                             </tr>
                         );

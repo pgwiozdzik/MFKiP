@@ -73,7 +73,9 @@
    3. STYLIZACJA WIERSZY I STATUSÓW (BADGES)
    ========================================================================== */
 .row-break {
-    background-color: #f8f9fa;
+    border-top: 3px solid var(--primary);
+    border-bottom: 3px solid var(--primary);
+    background-color: rgba(44, 62, 80, 0.34);
     font-style: italic;
 }
 
@@ -108,12 +110,6 @@
    ========================================================================== */
 
 
-/* Strzałki w wierszu przerwy */
-.row-break .btn-order {
-    background: #fff8e1;
-    border-color: #ffe082;
-    color: #f57f17;
-}
 
 /* ==========================================================================
    5. DODAWANIE PRZERW / UWAGI
