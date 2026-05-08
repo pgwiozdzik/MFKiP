@@ -26,8 +26,14 @@ const Overview = () => {
 
             // 3. Stabilne sortowanie (chronologiczne)
             const sorted = [...data].sort((a, b) => {
-                if (a.plannedStartTime !== b.plannedStartTime) {
-                    return a.plannedStartTime.localeCompare(b.plannedStartTime);
+
+                const timeA = a.changedStartTime;
+                const timeB = b.changedStartTime;
+
+                const timeCompare = String(timeA).localeCompare(String(timeB));
+
+                if (timeCompare !== 0) {
+                    return timeCompare;
                 }
                 return a.id - b.id;
             });
@@ -74,7 +80,9 @@ const Overview = () => {
                     </tr>
                     </thead>
                     <tbody>
-                    {schedule.map(row => {
+                    {schedule
+                        .filter(row => row.status !== "after")
+                        .map(row => {
                         // Pobieramy dane o czasie (wartość i kolor) z centralnego pliku
                         const timeData = getPredictedTimeData(row);
                         const config = STATUS_CONFIG[row.status] || {};

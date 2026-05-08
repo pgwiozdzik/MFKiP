@@ -48,12 +48,16 @@
     color: white;
 }
 
+.btn-primary,
+.btn-edit,
+.btn-order {
+    --btn-color: var(--primary);
+}
+
 /* ==========================================================================
    3. WARIANTY KOLORÓW
    ========================================================================== */
-.btn-primary {
-    --btn-color: var(--primary);
-}
+
 
 .btn-arrived {
     --btn-color: var(--status-arrived);
@@ -71,6 +75,14 @@
     --btn-color: var(--status-stage);
 }
 
+.btn-live {
+    --btn-color: var(--status-live);
+}
+
+.btn-after {
+    --btn-color: var(--status-after);
+}
+
 .btn-no-show {
     --btn-color: var(--status-noshow);
 }
@@ -86,10 +98,8 @@
 /* ==========================================================================
    5. PRZYCISKI EDYCJI I ORDER
    ========================================================================== */
-.btn-edit,
-.btn-order {
-    --btn-color: var(--primary);
-}
+
+
 
 /* ==========================================================================
    6. INPUT
@@ -97,7 +107,7 @@
 .input-field {
     width: 100%;
     /*padding: 1px;*/
-    margin: 10px 0;
+    margin: 4.3% 0;
     border: 1px solid #ccc;
     font-size: 1.1rem;
     text-align: center;

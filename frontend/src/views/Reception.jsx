@@ -14,26 +14,26 @@ const Reception = () => {
 
     const loadData = useCallback(async () => {
         try {
-            // 1. Pobierz aktywny dzień
             const activeDay = await apiService.getActiveDay();
-
-            // 2. Pobierz wolontariuszy oraz występy TYLKO dla aktywnego dnia
             const [perfData, volData] = await Promise.all([
                 apiService.getPerformancesByDay(activeDay.id),
                 apiService.getAllVolunteers()
             ]);
 
-            // 3. Sortowanie chronologiczne
             const sorted = [...perfData].sort((a, b) => {
-                if (a.plannedStartTime !== b.plannedStartTime) {
-                    return a.plannedStartTime.localeCompare(b.plannedStartTime);
+
+                const timeA = a.changedStartTime;
+                const timeB = b.changedStartTime;
+
+                const timeCompare = String(timeA).localeCompare(String(timeB));
+
+                if (timeCompare !== 0) {
+                    return timeCompare;
                 }
                 return a.id - b.id;
             });
 
-            // 4. Obliczanie przewidywanych czasów
             const withPredictedTimes = calculatePredictedTimes(sorted);
-
             setPerformances(withPredictedTimes);
             setVolunteers(volData);
             setLoading(false);
@@ -102,10 +102,18 @@ const Reception = () => {
     };
 
     const handleOrderChange = async (perf, direction) => {
-        try {
-            await apiService.reorderPerformance(perf.id, direction);
-        } catch (error) {
-            console.error("Błąd zmiany kolejności:", error);
+        const action = direction === 'up' ? "przesunąć w górę" : "przesunąć w dół";
+        const message = `Czy na pewno chcesz ${action} występ: "${perf.performerName}"?`;
+
+        // Wyświetla systemowe okno potwierdzenia
+        if (window.confirm(message)) {
+            try {
+                await apiService.reorderPerformance(perf.id, direction);
+                // Lista odświeży się automatycznie dzięki WebSocket (UPDATE)
+            } catch (error) {
+                console.error("Błąd zmiany kolejności:", error);
+                alert("Nie udało się zmienić kolejności.");
+            }
         }
     };
 
@@ -251,13 +259,9 @@ const Reception = () => {
                                 <td className="note-stage-cell hidden">{perf.noteStage}</td>
 
                                 <td className="col-actions">
-                                    {isEditing ? (
-                                        <div className="action-buttons editing">
-                                            <button onClick={() => handleSave(perf.id)} className="btn btn-ok">OK</button>
-                                            <button onClick={handleCancelEdit} className="btn btn-cancel">X</button>
-                                        </div>
-                                    ) : (
+
                                         <div className="action-buttons-wrapper">
+                                            {isEditing ? (<div className="status-actions"> </div>):(
                                             <div className="status-actions">
                                                 {/* PROGRESJA STATUSÓW */}
                                                 {perf.status === 'none' && (
@@ -290,22 +294,31 @@ const Reception = () => {
                                                     }} className="btn btn-primary">COFNIJ</button>
                                                 )}
                                             </div>
-
-                                            <div className="utility-actions">
-                                                {perf.isBreak ? "" :<button onClick={() => handleEditClick(perf)} className="btn btn-edit">✎</button>}
-                                                <div className="order-actions">
-                                                    {perf.isBreak ? "" :<button
-                                                        onClick={() => handleOrderChange(perf, 'up')}
-                                                        className={`btn btn-order ${isFirst ? 'invisible' : ''}`}
-                                                    > ▲ </button>}
-                                                    {perf.isBreak ? "" :<button
-                                                        onClick={() => handleOrderChange(perf, 'down')}
-                                                        className={`btn btn-order ${isLast ? 'invisible' : ''}`}
-                                                    > ▼ </button>}
+                                                )}
+                                            {isEditing ? (
+                                                <div className="utility-actions">
+                                                    <button onClick={handleCancelEdit} className="btn btn-cancel">X</button>
+                                                    <button onClick={() => handleSave(perf.id)} className="btn btn-ok">OK</button>
+                                                    <button className="btn btn-cancel" style={{ visibility: "hidden" }}>xf</button>
                                                 </div>
-                                            </div>
+                                            ) : (
+                                                <div className="utility-actions">
+
+                                                    {perf.isBreak ? "" :<button onClick={() => handleEditClick(perf)} className="btn btn-edit">✎</button>}
+                                                    <div className="order-actions">
+                                                        {perf.isBreak ? "" :<button
+                                                            onClick={() => handleOrderChange(perf, 'up')}
+                                                            className={`btn btn-order ${isFirst ? 'invisible' : ''}`}
+                                                        > ▲ </button>}
+                                                        {perf.isBreak ? "" :<button
+                                                            onClick={() => handleOrderChange(perf, 'down')}
+                                                            className={`btn btn-order ${isLast ? 'invisible' : ''}`}
+                                                        > ▼ </button>}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
+
                                 </td>
                             </tr>
                         );

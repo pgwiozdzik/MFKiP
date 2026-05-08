@@ -24,8 +24,14 @@ const Stage = () => {
 
             // 3. Stabilne sortowanie (chronologiczne)
             const sorted = [...data].sort((a, b) => {
-                if (a.plannedStartTime !== b.plannedStartTime) {
-                    return a.plannedStartTime.localeCompare(b.plannedStartTime);
+
+                const timeA = a.changedStartTime;
+                const timeB = b.changedStartTime;
+
+                const timeCompare = String(timeA).localeCompare(String(timeB));
+
+                if (timeCompare !== 0) {
+                    return timeCompare;
                 }
                 return a.id - b.id;
             });
@@ -128,7 +134,7 @@ const Stage = () => {
 
                                             {/* KROK 3: Start występu */}
                                             {perf.status === 'at-stage' && (
-                                                <button onClick={() => handleStatusChange(perf.id, 'performing')} className="btn-live">
+                                                <button onClick={() => handleStatusChange(perf.id, 'performing')} className="btn btn-live">
                                                     START
                                                 </button>
                                             )}

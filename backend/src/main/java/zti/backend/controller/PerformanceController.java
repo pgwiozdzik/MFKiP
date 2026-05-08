@@ -1,5 +1,6 @@
 package zti.backend.controller;
 
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
@@ -7,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import zti.backend.model.Performance;
 import zti.backend.repository.PerformanceRepository;
 
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -106,6 +108,50 @@ public class PerformanceController {
                 e.printStackTrace();
                 return ResponseEntity.status(500).body("Błąd bazy danych: " + e.getMessage());
             }
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @PatchMapping("/{id}/reorder")
+    @Transactional
+    public ResponseEntity<?> reorderPerformance(@PathVariable Long id, @RequestBody Map<String, String> payload) {
+        String direction = payload.get("direction");
+
+        return performanceRepository.findById(id).map(current -> {
+            // ZMIEŃ TO: Pobierz listę posortowaną tak, jak widzi ją użytkownik (COALESCE)
+            // Musisz dodać tę metodę do Repository lub użyć ogólnej, która sortuje poprawnie
+            List<Performance> dayPerformances = performanceRepository.findAllByDayIdSorted(current.getDay().getId());
+
+            // Sortowanie listy w Javie, aby zgadzało się z logiką COALESCE (Changed -> Planned)
+            dayPerformances.sort((a, b) -> {
+                LocalTime tA = a.getChangedStartTime() != null ? a.getChangedStartTime() : a.getPlannedStartTime();
+                LocalTime tB = b.getChangedStartTime() != null ? b.getChangedStartTime() : b.getPlannedStartTime();
+                return tA.compareTo(tB);
+            });
+
+            int currentIndex = dayPerformances.indexOf(current);
+            Performance target = null;
+
+            if ("up".equals(direction) && currentIndex > 0) {
+                target = dayPerformances.get(currentIndex - 1);
+            } else if ("down".equals(direction) && currentIndex < dayPerformances.size() - 1) {
+                target = dayPerformances.get(currentIndex + 1);
+            }
+
+            if (target != null) {
+                LocalTime timeCurrent = current.getChangedStartTime() != null ? current.getChangedStartTime() : current.getPlannedStartTime();
+                LocalTime timeTarget = target.getChangedStartTime() != null ? target.getChangedStartTime() : target.getPlannedStartTime();
+
+                // Zamiana
+                current.setChangedStartTime(timeTarget);
+                target.setChangedStartTime(timeCurrent);
+
+                performanceRepository.saveAndFlush(current);
+                performanceRepository.saveAndFlush(target);
+
+                messagingTemplate.convertAndSend("/topic/performances", "UPDATE");
+                return ResponseEntity.ok().build();
+            }
+            return ResponseEntity.badRequest().build();
         }).orElse(ResponseEntity.notFound().build());
     }
 }

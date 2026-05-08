@@ -1,5 +1,5 @@
 export const STATUS_CONFIG = {
-    'none': { label: 'Czekamy', short: 'Czekamy', class: 'badge-none' },
+    'none': { label: '', short: '', class: 'badge-none' },
     'arrived_venue': { label: 'W Arenie', short: 'ARENA', class: 'badge-arrived' },
     'arrived_school': { label: 'W Szkole', short: 'SZKOŁA', class: 'badge-arrived' },
     'called': { label: 'Wezwany', short: 'WEZW.', class: 'badge-called' },

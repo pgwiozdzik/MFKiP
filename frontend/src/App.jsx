@@ -8,7 +8,7 @@ import Reception from './views/Reception';
 import Admin from './views/Admin';
 
 function App() {
-    const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 godziny w milisekundach
+    const SESSION_DURATION = 2 * 60 * 60 * 1000; // 2 godziny w milisekundach
 
     const getInitialAuth = () => {
         const savedAuth = localStorage.getItem('userAuth');
