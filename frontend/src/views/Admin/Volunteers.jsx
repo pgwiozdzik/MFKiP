@@ -6,10 +6,9 @@ const Volunteers = () => {
     const [volunteers, setVolunteers] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Stany dla edycji i dodawania
     const [editingId, setEditingId] = useState(null);
     const [editData, setEditData] = useState({});
-    const [newVol, setNewVol] = useState({ name: '', phone: '', notes: '' });
+    const [newVol, setNewVol] = useState({ name: '', phone: '' });
 
     const fetchVolunteers = useCallback(async () => {
         try {
@@ -26,20 +25,18 @@ const Volunteers = () => {
         fetchVolunteers();
     }, [fetchVolunteers]);
 
-    // Obsługa dodawania
     const handleAddSubmit = async (e) => {
         e.preventDefault();
-        if (!newVol.name) return;
+        if (!newVol.name.trim()) return;
         try {
             await apiService.createVolunteer(newVol);
-            setNewVol({ name: '', phone: '', notes: '' });
+            setNewVol({ name: '', phone: '' });
             fetchVolunteers();
         } catch (error) {
             alert("Błąd podczas dodawania wolontariusza");
         }
     };
 
-    // Obsługa edycji
     const handleEditClick = (vol) => {
         setEditingId(vol.id);
         setEditData({ ...vol });
@@ -47,7 +44,6 @@ const Volunteers = () => {
 
     const handleSaveEdit = async (id) => {
         try {
-            // Zakładając, że masz taką metodę w apiService (analogicznie do performances)
             await apiService.updateVolunteer(id, editData);
             setEditingId(null);
             fetchVolunteers();
@@ -140,7 +136,6 @@ const Volunteers = () => {
                 </tbody>
             </table>
 
-            {/* Dolny panel dodawania - analogicznie do add-section w Reception */}
             <div className="add-section">
                 <form className="add-panel" onSubmit={handleAddSubmit}>
                     <input
@@ -159,14 +154,6 @@ const Volunteers = () => {
                         style={{ flex: 1 }}
                         value={newVol.phone}
                         onChange={(e) => setNewVol({...newVol, phone: e.target.value})}
-                    />
-                    <input
-                        type="text"
-                        placeholder="Uwagi"
-                        className="input-field"
-                        style={{ flex: 2 }}
-                        value={newVol.notes}
-                        onChange={(e) => setNewVol({...newVol, notes: e.target.value})}
                     />
                     <button type="submit" className="btn btn-ok">+ DODAJ</button>
                 </form>

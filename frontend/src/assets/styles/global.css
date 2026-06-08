@@ -25,8 +25,10 @@ body::before {
 
 .wrapper {
     box-sizing: border-box;
-    padding: 40px;
-    width: 90%;
+    /*padding: 40px;*/
+    padding-top: 2%;
+    padding-bottom: 2%;
+    width: 93%;
     margin: 0 auto 40px auto;
     height: 90vh;
     overflow: hidden;

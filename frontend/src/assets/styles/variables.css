@@ -2,14 +2,16 @@
     /* Colors */
     --primary: #2c3e50;
     --bg-light: #f0f2f5;
+    --primary-blue: #d6e0e5;
+    /*--primary: black;*/
     --text-dark: #333;
     --white: #ffffff;
 
     /* Status Colors */
     --status-none: #e0e0e0;
     --status-arrived: #2196f3;   /* niebieski */
-    --status-called: #ff9800;    /* pomarańczowy */
-    --status-coming: #d35400;
+    --status-called: #f7ff00;    /* pomarańczowy */
+    --status-coming: #f7ff00;
     --status-stage: #4caf50;     /* zielony */
     --status-live: #e74c3c;      /*czerwony       /* żółty: #ffeb3b; */
     --status-after: #9e9e9e;     /* szary */

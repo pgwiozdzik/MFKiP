@@ -12,7 +12,6 @@ const Overview = () => {
 
     const loadData = useCallback(async () => {
         try {
-            // 1. Najpierw pobierz informacje o tym, który dzień jest aktywny
             const activeDay = await apiService.getActiveDay();
 
             if (!activeDay || !activeDay.id) {
@@ -21,15 +20,11 @@ const Overview = () => {
                 return;
             }
 
-            // 2. Pobierz występy TYLKO dla tego konkretnego dnia
             const data = await apiService.getPerformancesByDay(activeDay.id);
 
-            // 3. Stabilne sortowanie (chronologiczne)
             const sorted = [...data].sort((a, b) => {
-
                 const timeA = a.changedStartTime;
                 const timeB = b.changedStartTime;
-
                 const timeCompare = String(timeA).localeCompare(String(timeB));
 
                 if (timeCompare !== 0) {
@@ -38,7 +33,6 @@ const Overview = () => {
                 return a.id - b.id;
             });
 
-            // 4. Przeliczanie czasów (opóźnienia na podstawie aktualnego stanu)
             const withTimes = calculatePredictedTimes(sorted);
 
             setSchedule(withTimes);
@@ -51,7 +45,6 @@ const Overview = () => {
         }
     }, []);
 
-    // Reaguj na UPDATE z WebSocket (zarówno zmiana statusu występu, jak i zmiana aktywnego dnia przez Admina)
     useWebSockets('/topic/performances', (message) => {
         if (message === "UPDATE") {
             loadData();
@@ -73,55 +66,56 @@ const Overview = () => {
                 <table className="table-custom table-view-overview">
                     <thead>
                     <tr>
-                        <th className="col-time">Planowa</th>
-                        <th className="col-time-predicted">Faktyczna</th>
+                        <th className="col-time">
+                            <span className="text-desktop">Planowa</span>
+                            <span className="text-mobile">Plan.</span>
+                        </th>
+                        <th className="col-time-predicted">
+                            <span className="text-desktop">Faktyczna</span>
+                            <span className="text-mobile">Fakt.</span>
+                        </th>
                         <th className="col-performer">Wykonawca</th>
                         <th className="col-status">Status</th>
                     </tr>
                     </thead>
                     <tbody>
                     {schedule
-                        .filter(row => row.status !== "after")
+                        .filter(row => (row.status !== "after" && row.status !== "no-show"))
                         .map(row => {
-                        // Pobieramy dane o czasie (wartość i kolor) z centralnego pliku
-                        const timeData = getPredictedTimeData(row);
-                        const config = STATUS_CONFIG[row.status] || {};
+                            const timeData = getPredictedTimeData(row);
+                            const config = STATUS_CONFIG[row.status] || {};
 
-                        return (
-                            // Zmień w Overview.jsx wewnątrz map()
-                            <tr
-                                key={row.id}
-                                className={`row-${row.status} ${row.isBreak ? 'row-break' : ''}`}
-                            >
-                                {/* Kolumna: Czas Planowany */}
-                                <td className="col-time">
-                                    {row.isBreak ? "" : formatTime(row.plannedStartTime)}
-                                </td>
+                            return (
+                                <tr
+                                    key={row.id}
+                                    className={` ${row.isBreak ? 'row-break' : `row-${row.status}`}`}
+                                >
+                                    <td className="col-time">
+                                        <strong>{row.isBreak ? "" : formatTime(row.plannedStartTime)}</strong>
+                                    </td>
 
-                                {/* Kolumna: Czas Faktyczny */}
-                                <td className="col-time-predicted" style={{
-                                    color: row.isBreak ? timeData.color : timeData.color, // Biały kolor jeśli przerwa
-                                    fontStyle: timeData.isActual ? 'normal' : 'italic'
-                                }}>
-                                    {row.isBreak ? "" : timeData.time}
-                                </td>
+                                    <td className="col-time-predicted" style={{
+                                        color: row.isBreak ? timeData.color : timeData.color,
+                                        fontStyle: timeData.isActual ? 'normal' : 'italic'
+                                    }}>
+                                        {row.isBreak ? "" : timeData.time}
+                                    </td>
 
-                                {/* Kolumna: Wykonawca */}
-                                <td className="col-performer">
-                                    {row.isBreak ? `${row.performerName}` : row.performerName}
-                                </td>
+                                    <td className="col-performer">
+                                        {row.isBreak ? `${row.performerName}` : row.performerName}
+                                    </td>
 
-                                {/* Kolumna: Status */}
-                                <td className="col-status">
-                                    {row.isBreak ? "" : (
-                                        <span className={`status-badge ${config.class}`}>
-                {config.label || row.status}
-            </span>
-                                    )}
-                                </td>
-                            </tr>
-                        );
-                    })}
+                                    <td className="col-status">
+                                        {row.isBreak ? "" : (
+                                            <span className={`status-badge ${config.class}`}>
+                                                <span className="text-desktop">{config.label || row.status}</span>
+                                                <span className="text-mobile">{config.short || row.status}</span>
+                                            </span>
+                                        )}
+                                    </td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>

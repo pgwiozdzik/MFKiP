@@ -1,11 +1,13 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { apiService } from '../api/apiService.js';
 import '../assets/styles/login.css';
 
 const Login = ({ onLogin }) => {
     const [selectedRole, setSelectedRole] = useState(null);
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false); // Blokada przycisku podczas ładowania
     const navigate = useNavigate();
     const passwordInputRef = useRef(null);
 
@@ -15,12 +17,6 @@ const Login = ({ onLogin }) => {
         admin: 'Administrator'
     };
 
-    const PASSWORDS = {
-        reception: 'a',
-        stage: 'a',
-        admin: 'a'
-    };
-
     const handleRoleSelect = (role) => {
         setSelectedRole(role);
         setError('');
@@ -28,15 +24,22 @@ const Login = ({ onLogin }) => {
         setTimeout(() => passwordInputRef.current?.focus(), 50);
     };
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
+        setIsLoading(true);
+        setError('');
 
-        if (PASSWORDS[selectedRole] === password) {
-            // Wywołujemy funkcję przekazaną w propsach zamiast window.location.href
+        try {
+            await apiService.login(selectedRole, password);
+
             onLogin(selectedRole);
             navigate('/');
-        } else {
+        } catch (err) {
             setError("Błędne hasło dla wybranej roli!");
+            setPassword('');
+            passwordInputRef.current?.focus();
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -71,21 +74,25 @@ const Login = ({ onLogin }) => {
                     </button>
                 </div>
 
-                {selectedRole && (
-                    <form onSubmit={handleLogin} className="password-section">
-                        <div className="form-group">
-                            <label>Hasło ({roleNames[selectedRole]}):</label>
-                            <input
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                ref={passwordInputRef}
-                                required
-                            />
-                        </div>
-                        <button type="submit" className="btn-submit">ZALOGUJ SIĘ</button>
-                    </form>
-                )}
+                <form
+                    onSubmit={handleLogin}
+                    className={`password-section ${selectedRole ? 'visible' : ''}`}
+                >
+                    <div className="form-group">
+                        <label>Hasło ({selectedRole ? roleNames[selectedRole] : ''}):</label>
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            ref={passwordInputRef}
+                            required
+                            disabled={isLoading}
+                        />
+                    </div>
+                    <button type="submit" className="btn btn-submit" disabled={isLoading}>
+                        {isLoading ? 'LOGOWANIE...' : 'ZALOGUJ SIĘ'}
+                    </button>
+                </form>
 
                 <p className="back-link">
                     <span onClick={() => navigate('/')}>&larr; Powrót do podglądu</span>

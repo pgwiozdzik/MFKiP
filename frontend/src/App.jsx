@@ -17,7 +17,6 @@ function App() {
         const { role, loginTime } = JSON.parse(savedAuth);
         const now = new Date().getTime();
 
-        // Jeśli czas który upłynął jest większy niż dozwolony - usuń sesję
         if (now - loginTime > SESSION_DURATION) {
             localStorage.removeItem('userAuth');
             return null;
@@ -41,7 +40,6 @@ function App() {
         }
     };
 
-    // Dodatkowy efekt: sprawdza ważność sesji przy każdym odświeżeniu/akcji
     useEffect(() => {
         const checkSession = () => {
             const savedAuth = localStorage.getItem('userAuth');
@@ -54,12 +52,10 @@ function App() {
             }
         };
 
-        // Sprawdzaj co np. 1 minutę
         const interval = setInterval(checkSession, 60000);
         return () => clearInterval(interval);
     }, [SESSION_DURATION]);
 
-    // 3. Logika wyboru widoku głównego
     const renderMainView = () => {
         switch (userRole) {
             case 'admin':
@@ -76,13 +72,11 @@ function App() {
     return (
         <Router>
             <div className="App">
-                {/* PRZEKAZUJEMY PROPSY DO HEADERA */}
                 <Header userRole={userRole} onLogout={() => handleAuthChange(null)} />
 
                 <Routes>
                     <Route path="/" element={renderMainView()} />
 
-                    {/* PRZEKAZUJEMY PROPSY DO LOGIN */}
                     <Route
                         path="/login"
                         element={<Login onLogin={(role) => handleAuthChange(role)} />}

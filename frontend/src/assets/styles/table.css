@@ -1,16 +1,26 @@
 /* ==========================================================================
+   TEKSTY RESPONSYWNE W NAGŁÓWKACH
+   ========================================================================== */
+.text-mobile {
+    display: none; /* Domyślnie ukrywamy skróty */
+}
+
+.text-desktop {
+    display: inline; /* Domyślnie pokazujemy pełne nazwy */
+}
+
+/* ==========================================================================
    1. FUNDAMENT TABELI I STRUKTURA
    ========================================================================== */
 .table-container {
     background: white;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
     opacity: 0.8;
     overscroll-behavior: none;
     flex: 1;
     min-height: 0;
     overflow: auto;
 }
-
 
 .table-custom {
     width: 100%;
@@ -23,7 +33,6 @@
     border-bottom: 1px solid #eee;
     text-align: center;
     vertical-align: middle;
-
 }
 
 .table-custom th {
@@ -32,6 +41,10 @@
     background: white;
     border-bottom: 1px solid #eee;
     z-index: 20;
+}
+
+.table-custom tr {
+    height: 70px;
 }
 
 .hidden {
@@ -43,40 +56,238 @@
 }
 
 /* ==========================================================================
-   2. MODYFIKATORY WIDOKÓW (LAYOUT KOLUMN)
+   2. MODYFIKATORY WIDOKÓW (PANEL STEROWANIA SZEROKOŚCIĄ)
    ========================================================================== */
 
-/* Overview */
-.table-view-overview .col-time { width: 15%; }
-.table-view-overview .col-performer { width: 55%; text-align: left; }
-.table-view-overview .col-status { width: 30%; }
+/* --- DOMYŚLNE SZEROKOŚCI (DESKTOP) --- */
+:root {
+    /* Widok Overview */
+    --ovr-col-time: 5%;
+    --ovr-col-time-pred: 5%;
+    --ovr-col-performer: 60%;
+    --ovr-col-status: 30%;
 
-/* Reception */
-.table-view-reception .col-time { width: 6%; }
-.table-view-reception .col-time-predicted { width: 6%; }
-.table-view-reception .col-performer { width: 30%; text-align: left; }
-.table-view-reception .col-status { width: 15%; }
-.table-view-reception .col-volunteer { width: 14%; }
-.table-view-reception .col-actions { width: 29%; text-align: center; }
+    /* Widok Recepcji */
+    --rec-col-time: 6%;
+    --rec-col-time-pred: 6%;
+    --rec-col-performer: 30%;
+    --rec-col-status: 17%;
+    --rec-col-volunteer: 12%;
+    --rec-col-actions: 29%;
 
-.table-reception th:last-child {
-    width: 350px;
+    /* Widok Sceny */
+    --stg-col-time: 10%;
+    --stg-col-performer: 40%;
+    --stg-col-diff: 20%;
+    --stg-col-status: 30%;
 }
 
+/* --- APLIKACJA ZMIENNYCH --- */
+/* Overview */
+.table-view-overview .col-time { width: var(--ovr-col-time); }
+.table-view-overview .col-time-predicted { width: var(--ovr-col-time-pred); }
+.table-view-overview .col-performer { width: var(--ovr-col-performer); text-align: left; }
+.table-view-overview .col-status { width: var(--ovr-col-status); }
+
+/* Reception */
+.table-view-reception .col-time { width: var(--rec-col-time); }
+.table-view-reception .col-time-predicted { width: var(--rec-col-time-pred); }
+.table-view-reception .col-performer { width: var(--rec-col-performer); text-align: left; }
+.table-view-reception .col-status { width: var(--rec-col-status); }
+.table-view-reception .col-volunteer { width: var(--rec-col-volunteer); }
+.table-view-reception .col-actions { width: var(--rec-col-actions); text-align: center; }
+
 /* Stage */
-.table-view-stage .col-time { width: 10%; }
-.table-view-stage .col-performer { width: 40%; }
-.table-view-stage .col-diff { width: 20%; }
-.table-view-stage .col-status { width: 30%; }
+.table-view-stage .col-time { width: var(--stg-col-time); }
+.table-view-stage .col-performer { width: var(--stg-col-performer); text-align: left; }
+.table-view-stage .col-diff { width: var(--stg-col-diff); }
+.table-view-stage .col-status { width: var(--stg-col-status); }
+
+/* Admin */
+.table-view-admin .col-performer { text-align: left; }
+
+.table-reception th:last-child {
+    width: var(--rec-col-actions);
+}
+
+/* ==========================================================================
+   RESPONSYWNOŚĆ (MEDIA QUERIES)
+   ========================================================================== */
+
+/* --- TABLETY I MAŁE LAPTOPY (do 1024px) --- */
+@media (max-width: 1024px) {
+    :root {
+        /* Drobne korekty, by przyciski miały więcej luzu */
+        --rec-col-time: 8%;
+        --rec-col-time-pred: 8%;
+        --rec-col-performer: 26%;
+        --rec-col-status: 16%;
+        --rec-col-volunteer: 14%;
+        --rec-col-actions: 28%;
+    }
+
+    .text-desktop {
+        display: none !important; /* Ukrywamy długie nazwy */
+    }
+
+    .text-mobile {
+        display: inline !important; /* Pokazujemy skróty */
+    }
+
+    /* Lekkie zmniejszenie paddingów dla oszczędności miejsca */
+    .table-custom th,
+    .table-custom td {
+        padding: 12px 10px;
+        font-size: 0.95rem;
+    }
+}
+
+/* --- TELEFONY (do 768px) --- */
+@media (max-width: 768px) {
+    :root {
+        /* KLUCZOWE: Zmieniamy procenty na sztywne piksele!
+           Zapobiega to miażdżeniu kolumn i wymusza scrollowanie poziome. */
+        --ovr-col-time: 5%;
+        --ovr-col-time-pred: 5%;
+        --ovr-col-performer: 60%;
+        --ovr-col-status: 30%;
+        /* Recepcja - sumarycznie ok. 800px szerokości */
+        /*--rec-col-time: 60px;*/
+        /*--rec-col-time-pred: 60px;*/
+        /*--rec-col-performer: 180px;*/
+        /*--rec-col-status: 120px;*/
+        /*--rec-col-volunteer: 120px;*/
+        /*--rec-col-actions: 240px;*/
+        --rec-col-time: 8%;
+        --rec-col-time-pred: 8%;
+        --rec-col-performer: 26%;
+        --rec-col-status: 16%;
+        --rec-col-volunteer: 14%;
+        --rec-col-actions: 28%;
+
+        /* Scena - sumarycznie ok. 600px szerokości */
+        --stg-col-time: 60px;
+        --stg-col-performer: 200px;
+        --stg-col-diff: 100px;
+        --stg-col-status: 240px;
+    }
+
+    /* Wymuszamy minimalną szerokość, aby kontener .table-container zaczął scrollować w osi X */
+    .table-view-reception { min-width: 800px; }
+    .table-view-stage { min-width: 600px; }
+    /*.table-view-overview { min-width: 500px; }*/
+
+    /* Optymalizacja na ekrany dotykowe */
+    .table-custom tr {
+        height: 60px; /* Nieco mniejsze wiersze */
+    }
+
+    .table-custom th,
+    .table-custom td {
+        padding: 10px 8px;
+        font-size: 0.9rem;
+    }
+
+    /* Optymalizacja widoku modali na telefonie */
+    .modal-content {
+        width: 100%;
+        margin: 10px;
+        padding: 15px;
+        max-height: 95vh;
+    }
+
+    /* Ustawienie przycisków w modalu, jeśli brakuje miejsca */
+    .modal-actions {
+        flex-direction: column;
+    }
+
+    .modal-actions .btn {
+        width: 100%;
+        margin-left: 0;
+        text-align: center;
+    }
+
+    /*!* ==========================================================================*/
+    /*   PRZYPIĘCIE PIERWSZEJ KOLUMNY (RECEPCJA)*/
+    /*   ========================================================================== *!*/
+
+    /*!* 1. Nagłówek "Plan." (musi być przypięty i w pionie, i w poziomie) *!*/
+    /*.table-view-reception th.col-time {*/
+    /*    position: sticky;*/
+    /*    left: 0;*/
+    /*    top: -1px;         !* Zachowujemy przyklejenie do góry strony *!*/
+    /*    z-index: 30;       !* Wyższy z-index niż zwykłe nagłówki (20), by być zawsze na wierzchu *!*/
+    /*    !*background: white; !* Białe tło nagłówka *!*!*/
+    /*}*/
+
+    /*!* 2. Komórki z godzinami w body tabeli *!*/
+    /*.table-view-reception td.col-time {*/
+    /*    position: sticky;*/
+    /*    left: 0;*/
+    /*    z-index: 10;        !* Wyższy niż zwykłe td (0), by inne dane chowały się pod spód *!*/
+    /*    !*background: inherit; !* KLUCZOWE: dziedziczy dynamiczny kolor wiersza (np. kolor przerwy czy wezwania) *!*!*/
+    /*}*/
+
+}
 
 /* ==========================================================================
    3. STYLIZACJA WIERSZY I STATUSÓW (BADGES)
    ========================================================================== */
 .row-break {
-    border-top: 3px solid var(--primary);
-    border-bottom: 3px solid var(--primary);
-    background-color: rgba(44, 62, 80, 0.34);
+    background-color: rgba(44, 62, 80, 0.15);
+}
+
+.row-arrived_school,
+.row-arrived_venue {
+    background-color: color-mix(in srgb, var(--status-arrived) 0%, transparent);
+}
+
+.row-called {
+    background-color: color-mix(in srgb, var(--status-coming) 10%, transparent);
+}
+
+.row-coming {
+    background-color: color-mix(in srgb, var(--status-coming) 10%, transparent);
+}
+
+.row-at-stage {
+    background-color: color-mix(in srgb, var(--status-stage) 20%, transparent);
+}
+
+.row-performing {
+    background-color: color-mix(in srgb, var(--status-live) 30%, transparent);
+    font-weight: 550;
+    color: black;
+}
+
+.row-after {
+    background-color: rgba(0, 0, 0, 0.03);
+    color: #888888;
+    filter: grayscale(100%);
+    opacity: 0.6;
     font-style: italic;
+}
+
+.row-no-show {
+    background-color: color-mix(in srgb, var(--status-noshow) 5%, rgba(0, 0, 0, 0.03));
+    opacity: 0.55;
+    filter: grayscale(70%);
+    color: #888888;
+    font-style: italic;
+}
+
+.row-no-show .col-performer,
+.row-no-show .col-time,
+.row-no-show .col-time-predicted {
+    text-decoration: line-through;
+    text-decoration-color: color-mix(in srgb, var(--status-noshow) 60%, #888);
+    text-decoration-thickness: 1.5px;
+}
+
+.row-none {
+    background-color: transparent;
+    font-style: italic;
+    font-weight: 380;
 }
 
 .status-badge {
@@ -88,44 +299,63 @@
 }
 
 .badge-none { display: none; }
+.badge-arrived { color: var(--primary); font-weight: normal; font-size: 0.99em; }
+.badge-called { font-weight: normal; font-size: 0.99em; color: var(--primary); }
+.badge-coming { font-weight: normal; font-size: 0.99em; color: var(--primary); }
+.badge-stage { font-weight: normal; font-size: 0.99em; color: var(--status-stage); }
+.badge-live { font-weight: normal; font-size: 0.99em; color: var(--status-live); }
+.badge-after { font-weight: normal; font-size: 0.99em; color: var(--status-after); }
+.badge-no-show { font-weight: normal; font-size: 0.99em; color: var(--status-noshow); }
 
-.badge-arrived { background-color: var(--status-arrived); color: white; }
-.badge-called { background-color: var(--status-called); color: white; }
-.badge-coming { background-color: var(--status-coming); color: white; }
-.badge-stage { background-color: var(--status-stage); color: white; }
-.badge-live { background-color: var(--status-live); color: white; animation: blink 1s infinite; }
-.badge-after { background-color: var(--status-after); color: #7f8c8d; }
-.badge-no-show { background-color: var(--status-noshow); color: white; }
+/* Live Status (Blink) */
+.badge-live {
+    color: var(--status-live);
+    font-weight: bold;
+    align-items: center;
+    gap: 8px;
+}
+
+.badge-live::before {
+    content: '';
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    background-color: var(--status-live);
+    border-radius: 50%;
+    animation: blink 1.2s ease-in-out infinite;
+    margin-right: 8px;
+}
 
 @keyframes blink {
     0% { opacity: 1; }
-    50% { opacity: 0.5; }
+    50% { opacity: 0.4; }
     100% { opacity: 1; }
 }
 
-
-
 /* ==========================================================================
-   4. ZAMIANA KOLEJNOŚCI (STRZAŁKI)
+   4. TRYB EDYCJI WIERSZA
    ========================================================================== */
+.row-editing {
+    background-color: color-mix(in srgb, rgb(4, 156, 255) 40%, transparent) !important;
+    opacity: 1 !important;
+    filter: none !important;
+}
 
-
+.row-editing td {
+    border-top: 2px solid var(--primary) !important;
+    border-bottom: 2px solid var(--primary) !important;
+}
 
 /* ==========================================================================
    5. DODAWANIE PRZERW / UWAGI
    ========================================================================== */
 .add-section {
-    /*margin-top: 20px;*/
     padding: 15px;
     background: white;
     overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-
-
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
     position: sticky;
     bottom: 0;
-
-
     z-index: 10;
 }
 
@@ -139,4 +369,83 @@
     font-size: 0.85rem;
     color: #666;
     font-style: italic;
+}
+
+/* ==========================================================================
+   6. MODAL - PODGLĄD ZMIANY KOLEJNOŚCI
+   ========================================================================== */
+.swap-preview-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    background: rgba(0, 0, 0, 0.02);
+    padding: 15px;
+    border: 1px solid var(--border-color, #eee);
+}
+
+.preview-section {
+    width: 100%;
+    background: white;
+    border: 1px solid #ddd;
+    overflow: hidden;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.preview-after {
+    border-color: var(--primary, #3498db);
+}
+
+.preview-header {
+    background: #cacaca;
+    padding: 8px;
+    text-align: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: #777;
+    letter-spacing: 1px;
+}
+
+.preview-header.highlight-bg {
+    background: var(--primary, #3498db);
+    color: white;
+}
+
+.mini-table {
+    margin: 0;
+    width: 100%;
+}
+
+.mini-table th {
+    position: static !important;
+    padding: 8px 12px !important;
+    background: #fafafa !important;
+    border-bottom: 2px solid #eee !important;
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.mini-table td {
+    padding: 12px !important;
+    font-size: 0.95rem;
+}
+
+.highlight-row {
+    background-color: rgba(52, 152, 219, 0.05);
+}
+
+.highlight-row td {
+    color: var(--primary, #2980b9);
+}
+
+.preview-arrow {
+    font-size: 1.5rem;
+    color: #aaa;
+    animation: bounceDown 2s infinite;
+}
+
+@keyframes bounceDown {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-5px); }
+    60% { transform: translateY(-3px); }
 }

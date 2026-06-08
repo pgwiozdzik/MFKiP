@@ -133,3 +133,54 @@
     font-size: 2.5rem;
     padding: 4px 25px;
 }
+
+/* ==========================================================================
+   HEADER - RESPONSYWNOŚĆ (TELEFONY do 768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+    .main-header {
+        padding: 0 15px;
+        height: 60px; /* Zmniejszamy wysokość belki */
+        position: relative; /* Konieczne dla absolutnego pozycjonowania nazwy widoku */
+    }
+
+    /* 1. UKRYWAMY NAZWĘ FESTIWALU I DATĘ */
+    .app-name-wrapper,
+    .day-info-wrapper {
+        display: none !important;
+    }
+
+    /* 2. ZMNIEJSZAMY LOGO */
+    .logo-img {
+        height: 50px;
+    }
+
+    /* 3. ZEGAR NA ŚRODKU */
+    .big-clock {
+        font-size: 1.7rem;
+        padding: 0;
+    }
+
+    /* 4. NAZWA WIDOKU (ROLE BADGE) ZAWSZE PO PRAWEJ */
+    .role-badge {
+        font-size: 1.5rem;
+        /*font-weight: 500;*/
+        border-left: none; /* Usuwamy pionową kreskę na telefonie */
+        padding-left: 0;
+
+        /* Odrywamy badge od naturalnego ułożenia i przyklejamy do prawej krawędzi */
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        height: auto;
+    }
+
+    /* Wyrównanie elastycznych kontenerów, aby zegar był na pewno na środku */
+    .header-left, .header-right {
+        flex: 1;
+    }
+    .header-center {
+        flex: 2; /* Zegar dostaje priorytet miejsca na małym ekranie */
+    }
+}

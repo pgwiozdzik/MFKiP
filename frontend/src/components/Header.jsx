@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useCallback} from 'react';
-import { useNavigate, useLocation } from 'react-router-dom'; // Dodano useLocation
+import { useNavigate, useLocation } from 'react-router-dom';
 import { apiService } from '../api/apiService.js';
 import {useWebSockets} from "../hooks/useWebSockets.js";
 
@@ -7,14 +7,14 @@ const Header = ({ userRole, onLogout }) => {
     const [time, setTime] = useState(new Date());
     const [activeDay, setActiveDay] = useState("Ładowanie...");
     const navigate = useNavigate();
-    const location = useLocation(); // Pobieramy aktualną ścieżkę
+    const location = useLocation();
 
     const isLoginPage = location.pathname === '/login';
 
     const roleLabels = {
-        reception: 'Recepcja',
-        stage: 'Scena',
-        admin: 'Admin'
+        reception: { desktop: 'Recepcja', mobile: 'Recep.' },
+        stage: { desktop: 'Scena', mobile: 'Scena' },
+        admin: { desktop: 'Administrator', mobile: 'Admin' }
     };
 
     const fetchDay = useCallback(async () => {
@@ -29,7 +29,6 @@ const Header = ({ userRole, onLogout }) => {
         }
     }, []);
 
-    // SUBSKRYPCJA WEBSOCKET: Gdy przyjdzie UPDATE, odświeżamy aktywny dzień
     useWebSockets('/topic/performances', (message) => {
         if (message === "UPDATE") {
             console.log("Header: Wykryto zmianę dnia, odświeżam...");
@@ -40,32 +39,18 @@ const Header = ({ userRole, onLogout }) => {
     useEffect(() => {
         const timer = setInterval(() => setTime(new Date()), 1000);
 
-        const fetchDay = async () => {
-            try {
-                const data = await apiService.getActiveDay();
-                if (data && data.name) {
-                    setActiveDay(data);
-                }
-            } catch (err) {
-                console.error("Błąd pobierania dnia:", err);
-                setActiveDay("2026");
-            }
-        };
-
         fetchDay();
+
         return () => clearInterval(timer);
-    }, []);
+    }, [fetchDay]);
 
     const handleLogoClick = () => {
         if (userRole) {
-            // 1. Jeśli zalogowany -> Wyloguj
             onLogout();
             navigate('/');
         } else if (isLoginPage) {
-            // 2. Jeśli niezalogowany i na stronie logowania -> Wróć do podglądu
             navigate('/');
         } else {
-            // 3. Jeśli niezalogowany i gdzie indziej -> Idź do logowania
             navigate('/login');
         }
     };
@@ -85,7 +70,6 @@ const Header = ({ userRole, onLogout }) => {
                 <div
                     className={`logo-link ${userRole ? 'is-logged' : ''}`}
                     onClick={handleLogoClick}
-                    // Dynamiczny opis w zależności od miejsca i stanu
                     title={userRole ? "Wyloguj się" : (isLoginPage ? "Powrót do podglądu" : "Panel logowania")}
                 >
                     <img src="/logo.png" alt="Logo MFKiP" className="logo-img" />
@@ -94,14 +78,14 @@ const Header = ({ userRole, onLogout }) => {
                     <div className="app-name-wrapper">
                         <span className="app-name-main">Międzynarodowy Festiwal</span>
                         <span className="app-name-main">Kolęd i Pastorałek</span>
-                        <span className="app-name-sub">
-            im. ks. Kazimierza Szwarlika
-        </span>
+                        <span className="app-name-sub">im. ks. Kazimierza Szwarlika</span>
                     </div>
                     {userRole && (
                         <span className="role-badge">
-                            {roleLabels[userRole]}
-        </span>
+                            {/* DYNAMICZNE PODMIANIANIE TEKSTU */}
+                            <span className="text-desktop">{roleLabels[userRole].desktop}</span>
+                            <span className="text-mobile">{roleLabels[userRole].mobile}</span>
+                        </span>
                     )}
                 </div>
             </div>
@@ -112,13 +96,10 @@ const Header = ({ userRole, onLogout }) => {
 
             <div className="header-right">
                 <div className="day-info-wrapper">
-                    {/* Nazwa dnia (np. Czwartek) - analogicznie do nazwy głównej */}
                     <span className="day-name-main">{activeDay?.name || "2026"}</span>
-
-                    {/* Data (np. 26.03.2026) - analogicznie do imienia patrona */}
                     <span className="day-date-sub">
-            {activeDay?.date ? new Date(activeDay.date).toLocaleDateString('pl-PL') : ""}
-        </span>
+                        {activeDay?.date ? new Date(activeDay.date).toLocaleDateString('pl-PL') : ""}
+                    </span>
                 </div>
             </div>
         </header>

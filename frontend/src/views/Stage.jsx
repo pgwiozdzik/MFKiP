@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { apiService } from '../api/apiService.js';
 import { STATUS_CONFIG } from '../config/statusConfig';
 import { useWebSockets } from '../hooks/useWebSockets.js';
@@ -9,9 +9,28 @@ const Stage = () => {
     const [performances, setPerformances] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const [statusModal, setStatusModal] = useState({
+        isOpen: false,
+        perf: null,
+        newStatus: null,
+        actionLabel: ''
+    });
+
+    const tableContainerRef = useRef(null);
+    const hasAutoScrolled = useRef(false);
+
+    const confirmButtonRef = useRef(null);
+
+    useEffect(() => {
+        if (statusModal.isOpen && confirmButtonRef.current) {
+            setTimeout(() => {
+                confirmButtonRef.current.focus();
+            }, 10);
+        }
+    }, [statusModal.isOpen]);
+
     const loadData = useCallback(async () => {
         try {
-            // 1. Pobierz aktywny dzień
             const activeDay = await apiService.getActiveDay();
 
             if (!activeDay || !activeDay.id) {
@@ -19,15 +38,11 @@ const Stage = () => {
                 return;
             }
 
-            // 2. Pobierz występy tylko dla tego dnia
             const data = await apiService.getPerformancesByDay(activeDay.id);
 
-            // 3. Stabilne sortowanie (chronologiczne)
             const sorted = [...data].sort((a, b) => {
-
                 const timeA = a.changedStartTime;
                 const timeB = b.changedStartTime;
-
                 const timeCompare = String(timeA).localeCompare(String(timeB));
 
                 if (timeCompare !== 0) {
@@ -36,7 +51,6 @@ const Stage = () => {
                 return a.id - b.id;
             });
 
-            // 4. Przeliczanie czasów (uwzględniając ewentualne opóźnienia)
             const withPredictedTimes = calculatePredictedTimes(sorted);
 
             setPerformances(withPredictedTimes);
@@ -47,7 +61,6 @@ const Stage = () => {
         }
     }, []);
 
-    // Nasłuchiwanie na zmiany (statusy, zmiany kolejności lub zmiana aktywnego dnia)
     useWebSockets('/topic/performances', (message) => {
         if (message === "UPDATE") loadData();
     });
@@ -56,31 +69,87 @@ const Stage = () => {
         loadData();
     }, [loadData]);
 
-    const handleStatusChange = async (id, newStatus) => {
+    useEffect(() => {
+        if (loading || hasAutoScrolled.current || performances.length === 0) return;
+
+        const firstActiveIndex = performances.findIndex(p => p.status !== 'after');
+
+        if (firstActiveIndex <= 0) {
+            hasAutoScrolled.current = true;
+            return;
+        }
+
+        const container = tableContainerRef.current;
+        if (container) {
+            const rowElement = container.querySelector(`tbody tr:nth-child(${firstActiveIndex + 1})`);
+            if (rowElement) {
+                const stickyHeaderHeight = 75; // Dopasowane do css tr height
+                container.scrollTo({
+                    top: rowElement.offsetTop - stickyHeaderHeight,
+                    behavior: 'smooth'
+                });
+            }
+        }
+
+        hasAutoScrolled.current = true;
+    }, [performances, loading]);
+
+    const requestStatusChange = (perf, newStatus, actionLabel) => {
+        setStatusModal({
+            isOpen: true,
+            perf: perf,
+            newStatus: newStatus,
+            actionLabel: actionLabel
+        });
+    };
+
+    const handleStatusChange = async (perf, newStatus) => {
+        if (!perf) return;
+
         try {
-            await apiService.updatePerformanceStatus(id, newStatus);
+            if (newStatus === 'performing') {
+                const currentPerforming = performances.find(p => p.status === 'performing');
+                if (currentPerforming && currentPerforming.id !== perf.id) {
+                    await apiService.updatePerformanceStatus(currentPerforming.id, 'after');
+                }
+
+                const now = new Date();
+                const currentTimeString = now.toLocaleTimeString('pl-PL', {
+                    hour12: false,
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+
+                await apiService.updatePerformance(perf.id, {
+                    ...perf,
+                    status: 'performing',
+                    actualStartTime: currentTimeString
+                });
+            } else {
+                await apiService.updatePerformanceStatus(perf.id, newStatus);
+            }
         } catch (error) {
+            console.error("Szczegóły błędu 500:", error.response?.data);
             alert("Błąd zmiany statusu na scenie");
         }
     };
 
-    const renderPredictedTime = (perf) => {
-        const { time, color, isActual } = getPredictedTimeData(perf);
-        return (
-            <span style={{
-                color,
-                fontStyle: isActual ? 'normal' : 'italic',
-                fontWeight: isActual ? 'bold' : 'normal'
-            }}>
-                {time}
-            </span>
-        );
+    const confirmStatusChange = async () => {
+        const { perf, newStatus } = statusModal;
+
+        await handleStatusChange(perf, newStatus); // Wykonanie właściwej zmiany
+
+        setStatusModal({ isOpen: false, perf: null, newStatus: null, actionLabel: '' });
     };
+    const waitingAtStage = performances.filter(p => p.status === 'at-stage');
+    const firstAtStageId = waitingAtStage.length > 0 ? waitingAtStage[0].id : null;
 
     if (loading) return <div className="wrapper">Inicjalizacja widoku sceny...</div>;
+
     return (
         <div className="wrapper">
-            <div className="table-container">
+            <div className="table-container" ref={tableContainerRef}>
                 <table className="table-custom table-view-stage table-stage">
                     <thead>
                     <tr>
@@ -88,7 +157,6 @@ const Stage = () => {
                         <th className="col-time-predicted">Faktyczna</th>
                         <th className="col-performer">Wykonawca</th>
                         <th className="col-status">Status</th>
-                        <th className="col-notes hidden">Uwagi Scena</th>
                         <th className="col-actions">Akcje</th>
                     </tr>
                     </thead>
@@ -99,7 +167,7 @@ const Stage = () => {
                         return (
                             <tr key={perf.id} className={perf.isBreak ? 'row-break' : `row-${perf.status}`}>
                                 <td className="col-time">{perf.plannedStartTime.substring(0, 5)}</td>
-                                <td className="col-time-predicted" style={{ color: getPredictedTimeData(perf).color, fontWeight: 'bold' }}>
+                                <td className="col-time-predicted" style={{ color: getPredictedTimeData(perf).color}}>
                                     {getPredictedTimeData(perf).time}
                                 </td>
                                 <td className="col-performer">
@@ -110,53 +178,52 @@ const Stage = () => {
                                             {config.label}
                                         </span>}
                                 </td>
-                                <td className="note-stage-cell hidden">
-                                    {perf.noteStage}
-                                </td>
 
                                 <td className="col-actions">
                                     <div className="action-buttons-wrapper">
                                         <div className="status-actions">
 
-                                            {/* KROK 1: Wezwanie (jeśli Recepcja zapomniała) */}
-                                            {(['none', 'arrived_school', 'arrived_venue'].includes(perf.status)) && (
-                                                <button onClick={() => handleStatusChange(perf.id, 'called')} className="btn btn-call">
+                                            {/* BEZ MODALA - natychmiastowe wykonanie */}
+                                            {(['arrived_school', 'arrived_venue'].includes(perf.status)) && (
+                                                <button onClick={() => handleStatusChange(perf, 'called')} className="btn btn-call">
                                                     WEZWIJ
                                                 </button>
                                             )}
 
-                                            {/* KROK 2: Potwierdzenie przybycia pod scenę */}
+                                            {/* Z MODALEM */}
                                             {(perf.status === 'called' || perf.status === 'coming') && (
-                                                <button onClick={() => handleStatusChange(perf.id, 'at-stage')} className="btn btn-stage">
+                                                <button onClick={() => requestStatusChange(perf, 'at-stage', 'POTWIERDŹ OBECNOŚĆ')} className="btn btn-stage">
                                                     POTWIERDŹ OBECNOŚĆ
                                                 </button>
                                             )}
 
-                                            {/* KROK 3: Start występu */}
+                                            {/* Z MODALEM */}
                                             {perf.status === 'at-stage' && (
-                                                <button onClick={() => handleStatusChange(perf.id, 'performing')} className="btn btn-live">
+                                                <button
+                                                    onClick={() => requestStatusChange(perf, 'performing', 'START')}
+                                                    className="btn btn-live"
+                                                    style={{ display: perf.id === firstAtStageId ? 'inline-block' : 'none' }}
+                                                >
                                                     START
                                                 </button>
                                             )}
 
-                                            {/* KROK 4: Koniec występu */}
+                                            {/* Z MODALEM */}
                                             {perf.status === 'performing' && (
-                                                <button onClick={() => handleStatusChange(perf.id, 'after')} className="btn btn-after">
+                                                <button onClick={() => requestStatusChange(perf, 'after', 'ZAKOŃCZ')} className="btn btn-after">
                                                     ZAKOŃCZ
                                                 </button>
                                             )}
 
-                                            {/* COFNIJ: Dynamiczny powrót */}
-                                            {perf.status !== 'none' && perf.status !== 'after' && !perf.isBreak && (
+                                            {/* BEZ MODALA - natychmiastowe cofnięcie */}
+                                            {(perf.status === 'called' || perf.status === 'at-stage') && !perf.isBreak && (
                                                 <button
                                                     onClick={() => {
                                                         const prevStates = {
                                                             'called': 'arrived_venue',
-                                                            'coming': 'called',
-                                                            'at-stage': 'coming',
-                                                            'performing': 'at-stage'
+                                                            'at-stage': 'coming'
                                                         };
-                                                        handleStatusChange(perf.id, prevStates[perf.status] || 'none');
+                                                        handleStatusChange(perf, prevStates[perf.status] || 'none');
                                                     }}
                                                     className="btn btn-primary"
                                                 >
@@ -172,6 +239,42 @@ const Stage = () => {
                     </tbody>
                 </table>
             </div>
+
+            {statusModal.isOpen && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h3>{statusModal.actionLabel}</h3>
+                        <div className="modal-body">
+                            <p style={{ textAlign: 'center' }}>
+                                <strong style={{ fontSize: '1.2rem', display: 'block', marginTop: '10px' }}>
+                                    {statusModal.perf?.performerName}
+                                </strong>
+                            </p>
+
+                            {(statusModal.actionLabel === 'START' || statusModal.actionLabel === 'ZAKOŃCZ') && (
+                                <p style={{
+                                    color: '#e74c3c',
+                                    fontWeight: 'bold',
+                                    textAlign: 'center',
+                                    marginTop: '15px',
+                                    padding: '10px',
+                                }}>
+                                    Uwaga: Tej akcji nie da się cofnąć!
+                                </p>
+                            )}
+
+                        </div>
+                        <div className="modal-actions">
+                            <button className="btn btn-cancel" onClick={() => setStatusModal({ isOpen: false, perf: null, newStatus: null, actionLabel: '' })}>
+                                ANULUJ
+                            </button>
+                            <button className="btn btn-ok" onClick={confirmStatusChange} ref={confirmButtonRef}>
+                                POTWIERDŹ
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

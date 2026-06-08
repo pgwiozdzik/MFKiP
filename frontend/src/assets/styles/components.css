@@ -60,15 +60,20 @@
 
 
 .btn-arrived {
-    --btn-color: var(--status-arrived);
+    --btn-color: var(--primary);
 }
 
 .btn-call {
-    --btn-color: var(--status-called);
+    --btn-color: color-mix(in srgb, var(--primary) 100%, transparent);
+    background-color: color-mix(in srgb, var(--status-called) 40%, transparent);
+    /*color: var(--primary);*/
 }
 
 .btn-coming {
-    --btn-color: var(--status-coming);
+    /*--btn-color: var(--primary);*/
+    background-color: color-mix(in srgb, var(--status-coming) 40%, transparent);
+    --btn-color: color-mix(in srgb, var(--primary) 100%, transparent);
+
 }
 
 .btn-stage {
@@ -98,7 +103,18 @@
 /* ==========================================================================
    5. PRZYCISKI EDYCJI I ORDER
    ========================================================================== */
+.btn-submit {
+    width: 100%;
+    padding: 12px;
+    --btn-color: #28a745;
+    font-weight: bold;
+    font-size: 1rem;
+    border: 2px solid #28a745;
+}
 
+/*.btn-submit:hover {*/
+/*    background: #218838;*/
+/*}*/
 
 
 /* ==========================================================================
@@ -106,10 +122,92 @@
    ========================================================================== */
 .input-field {
     width: 100%;
-    /*padding: 1px;*/
-    margin: 4.3% 0;
+
+    /* 1. KONTROLA ROZMIARU (Zamiast marginesów) */
+    box-sizing: border-box; /* Ramka i padding są wliczane w wymiar całkowity */
+    margin: 0; /* Usuwamy problematyczne procenty */
+    height: 25px; /* Sztywna wysokość - dostosuj ją tak, by pasowała do Twojej tabeli */
+
+    /* 2. WYGLĄD (Twoje ustawienia) */
     border: 1px solid #ccc;
     font-size: 1.1rem;
     text-align: center;
     background-color: white;
+}
+.add-section {
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+
+.input-group {
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.input-group label {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+
+
+/* ==========================================================================
+   MODAL - STRUKTURA BAZOWA
+   ========================================================================== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center; /* Wyśrodkowanie pionowe */
+    z-index: 1000;
+    overflow: hidden; /* Blokujemy scrollowanie całego tła ekranu */
+}
+
+.modal-content {
+    background: white;
+    padding: 20px;
+    width: 95%;
+    max-width: 600px; /* To masz ustawione inline, ale warto trzymać w CSS */
+
+    /* KLUCZOWE WŁAŚCIWOŚCI DLA OGRANICZENIA WYSOKOŚCI */
+    max-height: 90vh; /* Modal nie może być wyższy niż 90% wysokości okna przeglądarki */
+    display: flex;
+    flex-direction: column; /* Układamy dzieci (h3, body, actions) w pionową kolumnę */
+}
+
+/* Tytuł modala zostaje przyklejony na górze */
+.modal-content h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    flex-shrink: 0; /* Zabrania kurczenia się nagłówka */
+}
+
+.modal-body {
+    /* KLUCZOWE: Obszar wewnętrzny dostaje pasek przewijania, jeśli treść jest za długa */
+    overflow-y: auto;
+    flex: 1 1 auto; /* Pozwala sekcji body rosnąć i kurczyć się w miarę dostępnego miejsca */
+
+    /* Drobna stylizacja paska przewijania (opcjonalnie) */
+    padding-right: 5px; /* Margines, by scrollbar nie najeżdżał na tekst */
+}
+
+/* Przyciski akcji zostają przyklejone na dole */
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee; /* Optyczne odcięcie przycisków od przewijanej treści */
+    flex-shrink: 0; /* Zabrania kurczenia się sekcji z przyciskami */
 }

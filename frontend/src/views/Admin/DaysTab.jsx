@@ -36,7 +36,6 @@ const DaysTab = ({ dayName, onSetActiveRequest }) => {
                     (a.plannedStartTime || "").localeCompare(b.plannedStartTime || "")
                 );
 
-                // Admin widzi te same przewidywane czasy co Recepcja
                 setPerformances(calculatePredictedTimes(sorted));
             }
             setLoading(false);
@@ -61,6 +60,22 @@ const DaysTab = ({ dayName, onSetActiveRequest }) => {
 
     const isThisDayActive = dayData?.active === true || dayData?.isActive === true;
 
+    const addMinutesToTime = (timeStr, minutesToAdd) => {
+        if (!timeStr) return "12:00";
+        const [h, m] = timeStr.split(':').map(Number);
+        const date = new Date();
+        date.setHours(h, m + minutesToAdd, 0);
+
+        return date.toTimeString().split(' ')[0].substring(0, 5);
+    };
+
+    const handleTimeChange = (minutes) => {
+        setNewPerf(prev => ({
+            ...prev,
+            plannedStartTime: addMinutesToTime(prev.plannedStartTime, minutes)
+        }));
+    };
+
     const handleEdit = (perf) => {
         setEditingId(perf.id);
         setEditData({ ...perf });
@@ -83,28 +98,30 @@ const DaysTab = ({ dayName, onSetActiveRequest }) => {
         if (e) e.preventDefault();
         if (!dayData?.id || !newPerf.performerName.trim()) return;
 
-        // Zabezpieczenie formatu czasu: HH:mm -> HH:mm:00
         let formattedTime = newPerf.plannedStartTime;
-        if (formattedTime.split(':').length === 2) {
-            formattedTime += ':00';
-        }
+        if (formattedTime.split(':').length === 2) formattedTime += ':00';
 
         const payload = {
             performerName: newPerf.performerName,
-            plannedStartTime: formattedTime, // Teraz ma format HH:mm:ss
+            plannedStartTime: formattedTime,
             status: 'none',
             day: { id: dayData.id },
             volunteer: newPerf.volunteerId ? { id: parseInt(newPerf.volunteerId) } : null,
-            isBreak: false // Warto wysłać jawnie
+            isBreak: false
         };
 
         try {
             await apiService.addPerformance(payload);
-            setNewPerf({ performerName: '', plannedStartTime: '12:00:00', volunteerId: '' });
+
+            const nextTime = addMinutesToTime(formattedTime, 10);
+            setNewPerf({
+                performerName: '',
+                plannedStartTime: nextTime,
+                volunteerId: ''
+            });
         } catch (e) {
-            // Wyświetl szczegóły błędu w konsoli, ułatwi to diagnozę
-            console.error("Błąd 500 szczegóły:", e.response?.data);
-            alert("Błąd podczas dodawania: " + (e.response?.data || "Błąd serwera"));
+            console.error("Błąd 500:", e.response?.data);
+            alert("Błąd: " + (e.response?.data || "Błąd serwera"));
         }
     };
 
@@ -117,7 +134,7 @@ const DaysTab = ({ dayName, onSetActiveRequest }) => {
 
     return (
         <div className="table-container">
-            <table className="table-custom table-reception">
+            <table className="table-custom table-view-admin">
                 <thead>
                 <tr>
                     <th className="col-time">Planowa</th>
@@ -133,28 +150,28 @@ const DaysTab = ({ dayName, onSetActiveRequest }) => {
                     const isEditing = editingId === perf.id;
                     const config = STATUS_CONFIG[perf.status] || {};
                     return (
-                        <tr key={perf.id} className={perf.isBreak ? 'row-break' : `row-${perf.status}`}>
-                            <td>
+                        <tr key={perf.id} className={`${perf.isBreak ? 'row-break' : `row-${perf.status}`} ${isEditing ? 'row-editing' : ''}`}>
+                            <td className="col-time">
                                 {isEditing ? (
                                     <input type="time" step="1" className="input-field" value={editData.plannedStartTime || ""}
                                            onChange={e => setEditData({...editData, plannedStartTime: e.target.value})} />
                                 ) : perf.plannedStartTime?.substring(0, 5)}
                             </td>
-                            <td>{renderPredictedTime(perf)}</td>
-                            <td>
+                            <td className="col-time-predicted">{renderPredictedTime(perf)}</td>
+                            <td className="col-performer">
                                 {isEditing ? (
                                     <input type="text" className="input-field" value={editData.performerName || ""}
                                            onChange={e => setEditData({...editData, performerName: e.target.value})} />
                                 ) : (perf.isBreak ? <strong>{perf.performerName}</strong> : perf.performerName)}
                             </td>
-                            <td>
+                            <td className="col-status">
                                 {isEditing ? (
                                     <select className="input-field" value={editData.status} onChange={e => setEditData({...editData, status: e.target.value})}>
                                         {Object.entries(STATUS_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                                     </select>
                                 ) : <span className={`status-badge ${config.class}`}>{config.label}</span>}
                             </td>
-                            <td>
+                            <td className="col-volunteer">
                                 {isEditing ? (
                                     <select className="input-field" value={editData.volunteer?.id || ""}
                                             onChange={e => {
@@ -187,50 +204,53 @@ const DaysTab = ({ dayName, onSetActiveRequest }) => {
             </table>
 
             <div className="add-section admin-footer-actions">
-                <form className="add-panel" onSubmit={handleAddNew}>
-                    <div className="input-group">
-                        <span>Godz:</span>
+                <form className="add-panel-refined" onSubmit={handleAddNew}>
+                    <div className="time-control-group">
+                        <div className="time-stepper">
+                            <button type="button" onClick={() => handleTimeChange(-5)} className="btn-step"> - </button>
+                            <input
+                                type="time"
+                                className="input-field time-input"
+                                value={newPerf.plannedStartTime.substring(0, 5)} // Zawsze tniemy do HH:mm
+                                onChange={(e) => setNewPerf({...newPerf, plannedStartTime: e.target.value})}
+                            />
+                            <button type="button" onClick={() => handleTimeChange(5)} className="btn-step"> + </button>
+                        </div>
+                    </div>
+
+                    <div className="input-field-group" style={{ flex: 3 }}>
                         <input
-                            type="time"
-                            step="1"
+                            type="text"
+                            placeholder="Nazwa wykonawcy"
                             className="input-field"
-                            style={{ width: '130px' }}
-                            value={newPerf.plannedStartTime}
-                            onChange={(e) => setNewPerf({...newPerf, plannedStartTime: e.target.value})}
+                            value={newPerf.performerName}
+                            onChange={(e) => setNewPerf({...newPerf, performerName: e.target.value})}
+                            required
                         />
                     </div>
 
-                    <input
-                        type="text"
-                        placeholder="Nazwa wykonawcy / przerwy"
-                        className="input-field"
-                        style={{ flex: 2 }}
-                        value={newPerf.performerName}
-                        onChange={(e) => setNewPerf({...newPerf, performerName: e.target.value})}
-                        required
-                    />
+                    <div className="input-field-group" style={{ flex: 2 }}>
+                        <select
+                            className="input-field"
+                            value={newPerf.volunteerId}
+                            onChange={(e) => setNewPerf({...newPerf, volunteerId: e.target.value})}
+                        >
+                            <option value="">Wybierz wolontariusza...</option>
+                            {volunteers.map(v => (
+                                <option key={v.id} value={v.id}>{v.name}</option>
+                            ))}
+                        </select>
+                    </div>
 
-                    <select
-                        className="input-field"
-                        style={{ flex: 1 }}
-                        value={newPerf.volunteerId}
-                        onChange={(e) => setNewPerf({...newPerf, volunteerId: e.target.value})}
-                    >
-                        <option value="">Wybierz wolontariusza</option>
-                        {volunteers.map(v => (
-                            <option key={v.id} value={v.id}>{v.name}</option>
-                        ))}
-                    </select>
-
-                    <button type="submit" className="btn btn-ok">
+                    <button type="submit" className="btn btn-ok add-btn-main">
                         + DODAJ
                     </button>
 
-                    <div style={{ flex: 1 }}></div>
+                    <div className="divider"></div>
 
                     {!isThisDayActive && (
-                        <button type="button" className="btn btn-primary" onClick={() => onSetActiveRequest(dayData.id)}>
-                            USTAW JAKO AKTYWNY DZIEŃ
+                        <button type="button" className="btn btn-primary activate-day-btn" onClick={() => onSetActiveRequest(dayData.id)}>
+                            USTAW AKTYWNY DZIEŃ
                         </button>
                     )}
                 </form>

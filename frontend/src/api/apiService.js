@@ -1,24 +1,16 @@
-// src/api/apiService.js
 import axios from "axios";
 
 const API_BASE_URL = 'http://localhost:8081/api';
 
-// Tworzymy instancję klienta, aby nie powtarzać adresu URL i nagłówków
 const apiClient = axios.create({
     baseURL: API_BASE_URL,
     headers: {
         'Content-Type': 'application/json'
     },
-    withCredentials: true // ważne, jeśli używasz sesji/cookies
+    withCredentials: true
 });
 
 export const apiService = {
-    // --- SEKCJA: WYSTĘPY (PERFORMANCES) ---
-    getAllPerformances: async () => {
-        const response = await apiClient.get('/performances/all');
-        return response.data;
-    },
-
     getPerformancesByDay: async (dayId) => {
         const response = await apiClient.get(`/performances/day/${dayId}`);
         return response.data;
@@ -49,9 +41,6 @@ export const apiService = {
         return response.data;
     },
 
-    // --- SEKCJA: DNI (DAYS) ---
-
-    // TA METODA BYŁA POWODEM BŁĘDU 404/TYPEERROR
     getAllDays: async () => {
         const response = await apiClient.get('/days/all');
         return response.data;
@@ -67,7 +56,6 @@ export const apiService = {
         return response.data;
     },
 
-    // --- SEKCJA: WOLONTARIUSZE (VOLUNTEERS) ---
     getAllVolunteers: async () => {
         const response = await apiClient.get('/volunteers/all');
         return response.data;
@@ -80,6 +68,11 @@ export const apiService = {
 
     deleteVolunteer: async (id) => {
         const response = await apiClient.delete(`/volunteers/${id}`);
+        return response.data;
+    },
+
+    login: async (role, password) => {
+        const response = await apiClient.post('/auth/login', { role, password });
         return response.data;
     }
 };
